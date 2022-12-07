@@ -1,7 +1,7 @@
 {
     "name": "vscode-phpsab",
-    "displayName": "PHP Sniffer & Beautifier",
-    "description": "PHP Sniffer & Beautifier for Visual Studio Code",
+    "displayName": "PHP Sniffer & Beautifier Docker Fork",
+    "description": "Docker Fork for PHP Sniffer & Beautifier for Visual Studio Code",
     "version": "0.0.15",
     "icon": "php_logo.png",
     "publisher": "valeryanm",
@@ -36,7 +36,7 @@
     "contributes": {
         "commands": [
             {
-                "command": "fixer.fix",
+                "command": "fixer.docker.fix",
                 "title": "PHPCBF: Fix this file",
                 "when": "!inOutput && editorFocus && editorLangId == php"
             }
@@ -139,10 +139,35 @@
                     "type": "boolean",
                     "default": false,
                     "description": "Write debug info to the console"
+                },
+                "phpsab.dockerEnabled": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Use docker to run phpcs and phpcbf"
+                },
+                "phpsab.dockerContainer": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Docker container name"
+                },
+                "phpsab.dockerWorkspaceRoot": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Docker workspace root"
+                },
+                "phpsab.dockerExecutablePathCBF": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Docker phpcbf executable path"
+                },
+                "phpsab.dockerExecutablePathCS": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Docker phpcs executable path"
+                }
                 }
             }
-        }
-    },
+        },
     "scripts": {
         "vscode:prepublish": "webpack --mode production",
         "webpack": "webpack --mode development",
@@ -176,7 +201,7 @@
         "typescript": "^3.9.6",
         "vscode-test": "^1.4.0",
         "vscode-uri": "^2.1.2",
-        "webpack": "^4.43.0",
+        "webpack": "^4.46.0",
         "webpack-cli": "^3.3.12"
     }
 }

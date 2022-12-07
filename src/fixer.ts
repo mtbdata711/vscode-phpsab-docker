@@ -7,6 +7,7 @@
 import * as spawn from "cross-spawn";
 import { Configuration } from "./configuration";
 import { Settings } from "./interfaces/settings";
+import { SpawnArguments } from "./interfaces/spawn-options";
 import { StandardsPathResolver } from "./resolvers/standards-path-resolver";
 import { ConsoleError } from "./interfaces/console-error";
 import {
@@ -22,6 +23,7 @@ import {
 } from "vscode";
 import { SpawnSyncOptions } from "child_process";
 import { Logger } from "./logger";
+import * as path from "path";
 export class Fixer {
     public config!: Settings;
 
@@ -64,8 +66,28 @@ export class Fixer {
         standard: string,
         additionalArguments: string[]
     ) {
+        const uri = document.uri;
+        const workspaceFolder = workspace.getWorkspaceFolder(uri);
+
+        if (!workspaceFolder) {
+            return [];
+        }
         // Process linting paths.
         let filePath = document.fileName;
+
+        const resourceConf = this.config.resources[workspaceFolder.index];
+
+        const isDockerEnabled: boolean = resourceConf.dockerEnabled || false;
+
+        if (isDockerEnabled) {
+            const dockerWorkspaceRoot: string = resourceConf.dockerWorkspaceRoot || "";
+            // get workspace root from workspace folder
+            const workspaceRoot = workspaceFolder.uri.fsPath;
+            // get the relative path to the file
+            const relativePath = path.relative(workspaceRoot, uri.fsPath);
+            // replace workspace root with docker workspace root
+            filePath = path.join(dockerWorkspaceRoot, relativePath);
+        }
 
         let args = [];
         args.push("-q");
@@ -99,7 +121,6 @@ export class Fixer {
             return "";
         }
         this.logger.time("Fixer");
-
         const additionalArguments = resourceConf.fixerArguments.filter(
             (arg) => {
                 if (
@@ -143,11 +164,27 @@ export class Fixer {
                 lintArgs.join(" ")
         );
 
-        const fixer = spawn.sync(
-            resourceConf.executablePathCBF,
-            lintArgs,
-            options
-        );
+        const isDockerEnabled = resourceConf.dockerEnabled || false;
+        
+        const fixerArgs: SpawnArguments = {
+            command: "",
+            args: [],
+            spawnOptions: options
+        };
+
+        if( isDockerEnabled ) {
+            const dockerContainer = resourceConf.dockerContainer || "";
+            const dockerExecutablePathCBF = resourceConf.dockerExecutablePathCBF || "";
+            const dockerCommands = ["exec", "-i", dockerContainer, dockerExecutablePathCBF, ...lintArgs];
+            fixerArgs.command = "docker";
+            fixerArgs.args = dockerCommands;
+        }else{
+            fixerArgs.command = resourceConf.executablePathCBF;
+            fixerArgs.args = lintArgs;
+        }
+
+        const {command, args, spawnOptions} = fixerArgs;
+        const fixer = spawn.sync(command, args, spawnOptions);
         const stdout = fixer.stdout.toString().trim();
 
         let fixed = stdout + "\n";

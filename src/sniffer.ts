@@ -22,11 +22,13 @@ import {
 } from "vscode";
 import { Configuration } from "./configuration";
 import { Settings } from "./interfaces/settings";
-import { PHPCSReport, PHPCSMessageType } from "./interfaces/phpcs-report";
+import { PHPCSReport, PHPCSMessageType, PHPCSFileStatus } from "./interfaces/phpcs-report";
+import { SpawnArguments } from "./interfaces/spawn-options";
 import { StandardsPathResolver } from "./resolvers/standards-path-resolver";
 import { spawn } from "child_process";
 import { debounce } from "lodash";
 import { Logger } from "./logger";
+import * as path from "path";
 
 const enum runConfig {
     save = "onSave",
@@ -56,9 +58,9 @@ export class Sniffer {
         private logger: Logger
     ) {
         this.config = config;
-        if (config.resources[0].snifferEnable === false) {
-            return;
-        }
+        // if (config.resources[0].snifferEnable === false) {
+        //     return;
+        // }
         workspace.onDidChangeConfiguration(
             this.onConfigChange,
             this,
@@ -164,8 +166,29 @@ export class Sniffer {
      * @param standard
      */
     private getArgs(document: TextDocument, standard: string, additionalArguments: string[]) {
+        const uri = document.uri;
+        const workspaceFolder = workspace.getWorkspaceFolder(uri);
+
+        if (!workspaceFolder) {
+            return [];
+        }
+
+        const resourceConf = this.config.resources[workspaceFolder.index];
+
+        const isDockerEnabled: boolean = resourceConf.dockerEnabled || false;
+
         // Process linting paths.
         let filePath = document.fileName;
+
+        if( isDockerEnabled ) {
+            // get workspace root from workspace folder
+            const workspaceRoot = workspaceFolder.uri.fsPath;
+            // get the relative path to the file
+            const relativePath = path.relative(workspaceRoot, uri.fsPath);
+            const dockerWorkspaceRoot: string = resourceConf.dockerWorkspaceRoot || "";
+            // replace workspace root with docker workspace root
+            filePath = path.join(dockerWorkspaceRoot, relativePath);
+        }
 
         let args = [];
         args.push("--report=json");
@@ -246,8 +269,29 @@ export class Sniffer {
                         lintArgs.join(" ")
         );
 
-        const sniffer = spawn(resourceConf.executablePathCS, lintArgs, options);
+        // sniffer args can be different depending on if docker is enabled or not
+        // how can i handle with this?
 
+        const isDockerEnabled: boolean = resourceConf.dockerEnabled || false;
+
+        const snifferArgs: SpawnArguments = {
+            command: "",
+            args: [],
+            spawnOptions: options,
+        };
+
+        if( isDockerEnabled ) {
+            const dockerContainer = resourceConf.dockerContainer || "";
+            const dockerExecutablePathCS = resourceConf.dockerExecutablePathCS || "";
+            const dockerCommand = ["exec", "-i", dockerContainer, dockerExecutablePathCS, ...lintArgs];
+            snifferArgs.command = "docker";
+            snifferArgs.args = dockerCommand;
+        } else {
+            snifferArgs.command = resourceConf.executablePathCS;
+            snifferArgs.args = lintArgs;
+        }
+        const { command, args, spawnOptions } = snifferArgs;
+        const sniffer = spawn(command, args, spawnOptions);
         sniffer.stdin.write(fileText);
         sniffer.stdin.end();
 
@@ -266,8 +310,16 @@ export class Sniffer {
                 const diagnostics: Diagnostic[] = [];
                 try {
                     const { files }: PHPCSReport = JSON.parse(stdout);
-                    for (const file in files) {
-                        files[file].messages.forEach(
+                    // typescript object with keys as strings and values as PHPCSFileStatus
+                    const reMappedFiles = Object.entries(files).reduce((acc, [key, value]) => {
+                        const workspaceRoot = resourceConf.workspaceRoot || "";
+                        const dockerWorkspaceRoot = resourceConf.dockerWorkspaceRoot || "";
+                        const remappedKey = key.replace(dockerWorkspaceRoot, workspaceRoot);
+                        acc[remappedKey] = value;
+                        return acc;
+                    }, {} as { [key: string]: PHPCSFileStatus });
+                    for (const file in reMappedFiles) {
+                        reMappedFiles[file].messages.forEach(
                             ({ message, line, column, type, source }) => {
                                 const zeroLine = line - 1;
                                 const ZeroColumn = column - 1;

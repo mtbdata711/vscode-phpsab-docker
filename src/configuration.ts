@@ -49,7 +49,7 @@ export class Configuration {
                     "composerJsonPath",
                     "composer.json"
                 ),
-                standard: config.get("standard", ""),
+                standard: "Squiz",
                 autoRulesetSearch: config.get("autoRulesetSearch", true),
                 allowedAutoRulesets: config.get("allowedAutoRulesets", [
                     ".phpcs.xml",
@@ -59,8 +59,12 @@ export class Configuration {
                 ]),
                 snifferEnable: config.get("snifferEnable", true),
                 snifferArguments: config.get("snifferArguments", []),
+                dockerEnabled: config.get("dockerEnabled", false),
+                dockerContainer: config.get("dockerContainer", ""),
+                dockerWorkspaceRoot: config.get("dockerWorkspaceRoot", ""),
+                dockerExecutablePathCBF: config.get("dockerExecutablePathCBF", ""),
+                dockerExecutablePathCS: config.get("dockerExecutablePathCS", ""),
             };
-
             settings = await this.resolveCBFExecutablePath(settings);
             settings = await this.resolveCSExecutablePath(settings);
 
@@ -147,20 +151,21 @@ export class Configuration {
         settings: ResourceSettings,
         resource: string
     ): Promise<ResourceSettings> {
-        if (
-            settings.snifferEnable &&
-            !(await this.executableExist(settings.executablePathCS))
-        ) {
-            this.logger.logInfo("The phpcs executable was not found for " + resource);
-            settings.snifferEnable = false;
-        }
-        if (
-            settings.fixerEnable &&
-            !(await this.executableExist(settings.executablePathCBF))
-        ) {
-            this.logger.logInfo("The phpcbf executable was not found for " + resource);
-            settings.fixerEnable = false;
-        }
+        // if (
+        //     settings.snifferEnable &&
+        //     !(await this.executableExist(settings.executablePathCS))
+        // ) {
+        //     this.logger.logInfo("The phpcs executable was not found for " + resource);
+        //     settings.snifferEnable = false;
+        // }
+        // if (
+        //     settings.fixerEnable &&
+        //     !(await this.executableExist(settings.executablePathCBF))
+        // ) {
+        //     this.logger.logInfo("The phpcbf executable was not found for " + resource);
+        //     settings.fixerEnable = false;
+        // }
+        settings.fixerEnable = true;
         return settings;
     }
 

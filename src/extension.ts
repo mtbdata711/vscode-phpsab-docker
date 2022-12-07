@@ -24,7 +24,7 @@ function activateFixer(
 
     // register format from command pallet
     context.subscriptions.push(
-        commands.registerTextEditorCommand("fixer.fix", (textEditor) => {
+        commands.registerTextEditorCommand("fixer.docker.fix", (textEditor) => {
             if (textEditor.document.languageId === "php") {
                 commands.executeCommand("editor.action.formatDocument");
             }
