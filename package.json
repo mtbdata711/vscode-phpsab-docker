@@ -4,7 +4,7 @@
     "description": "Docker Fork for PHP Sniffer & Beautifier for Visual Studio Code",
     "version": "0.0.1",
     "icon": "php_logo.png",
-    "publisher": "mtbdata711",
+    "publisher": "mtbdata",
     "homepage": "https://github.com/mtbdata711/vscode-phpsab-docker",
     "license": "MIT",
     "repository": {
