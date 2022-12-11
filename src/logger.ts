@@ -9,7 +9,7 @@ export type LogLevel = "INFO" | "ERROR";
 
 export class Logger {
     private outputChannel = window.createOutputChannel(
-        "PHP Sniffer & Beautifier"
+        "PHP Sniffer & Beautifier Docker" 
     );
 
     private logLevel: LogLevel = "ERROR";
