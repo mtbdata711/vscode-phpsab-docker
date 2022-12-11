@@ -5,5 +5,12 @@
     "search.exclude": {
         "out": true
     },
-    "typescript.tsc.autoDetect": "off"
+    "typescript.tsc.autoDetect": "off",
+    "terminal.integrated.profiles.linux": {
+        "bash": {
+            "path": "bash",
+            "icon": "terminal-bash",
+            "args": ["-i"]
+        }
+    }
 }
