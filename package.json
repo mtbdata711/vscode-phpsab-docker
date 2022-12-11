@@ -1,18 +1,18 @@
 {
-    "name": "vscode-phpsab",
+    "name": "vscode-phpsab-docker",
     "displayName": "PHP Sniffer & Beautifier Docker Fork",
     "description": "Docker Fork for PHP Sniffer & Beautifier for Visual Studio Code",
     "version": "0.0.15",
     "icon": "php_logo.png",
-    "publisher": "valeryanm",
-    "homepage": "https://github.com/valeryan/vscode-phpsab",
+    "publisher": "mtbdata711",
+    "homepage": "https://github.com/mtbdata711/vscode-phpsab-docker-TEST",
     "license": "MIT",
     "repository": {
         "type": "git",
-        "url": "https://github.com/valeryan/vscode-phpsab.git"
+        "url": "https://github.com/mtbdata711/vscode-phpsab-docker-TEST.git"
     },
     "bugs": {
-        "url": "https://github.com/valeryan/vscode-phpsab/issues"
+        "url": "https://github.com/mtbdata711/vscode-phpsab-docker-TEST/issues"
     },
     "engines": {
         "vscode": "^1.46.0"
@@ -37,45 +37,45 @@
         "commands": [
             {
                 "command": "fixer.docker.fix",
-                "title": "PHPCBF: Fix this file",
+                "title": "PHPCBF Docker: Fix this file",
                 "when": "!inOutput && editorFocus && editorLangId == php"
             }
         ],
         "configuration": {
-            "title": "PHP Sniffer & Fixer Configuration options",
+            "title": "PHP Sniffer & Fixer Docker Configuration options",
             "type": "object",
             "properties": {
-                "phpsab.fixerEnable": {
+                "phpsab.docker.fixerEnable": {
                     "scope": "resource",
                     "type": "boolean",
                     "default": true,
                     "description": "Control if this fixer is enabled for PHP files or not."
                 },
-                "phpsab.fixerArguments": {
+                "phpsab.docker.fixerArguments": {
                     "scope": "resource",
                     "type": "array",
                     "default": [],
                     "description": "Additional arguments passed to phpcbf"
                 },
-                "phpsab.executablePathCBF": {
+                "phpsab.docker.executablePathCBF": {
                     "scope": "resource",
                     "type": "string",
                     "default": null,
                     "description": "Optional. The default path to the phpcbf executable. Can be overridden if auto search is enabled."
                 },
-                "phpsab.executablePathCS": {
+                "phpsab.docker.executablePathCS": {
                     "scope": "resource",
                     "type": "string",
                     "default": null,
                     "description": "Optional. The default path to the phpcs executable. Can be overridden if auto search is enabled."
                 },
-                "phpsab.composerJsonPath": {
+                "phpsab.docker.composerJsonPath": {
                     "scope": "resource",
                     "type": "string",
                     "default": "composer.json",
                     "description": "The path to composer.json"
                 },
-                "phpsab.standard": {
+                "phpsab.docker.standard": {
                     "scope": "resource",
                     "type": [
                         "string",
@@ -84,13 +84,13 @@
                     "default": null,
                     "description": "Optional. The default config to use or global standard. Can be overridden if auto search is enabled."
                 },
-                "phpsab.autoRulesetSearch": {
+                "phpsab.docker.autoRulesetSearch": {
                     "scope": "resource",
                     "type": "boolean",
                     "default": true,
                     "description": "Automatically search for a ruleset file to use as configuration. Overrides custom standards defined above."
                 },
-                "phpsab.allowedAutoRulesets": {
+                "phpsab.docker.allowedAutoRulesets": {
                     "scope": "resource",
                     "type": "array",
                     "default": [
@@ -103,19 +103,19 @@
                     ],
                     "description": "Filenames to search for that contain the ruleset for fixers."
                 },
-                "phpsab.snifferEnable": {
+                "phpsab.docker.snifferEnable": {
                     "scope": "resource",
                     "type": "boolean",
                     "default": true,
                     "description": "Control if this sniffer is enabled for PHP files or not."
                 },
-                "phpsab.snifferArguments": {
+                "phpsab.docker.snifferArguments": {
                     "scope": "resource",
                     "type": "array",
                     "default": [],
                     "description": "Additional arguments passed to phpcs"
                 },
-                "phpsab.snifferMode": {
+                "phpsab.docker.snifferMode": {
                     "type": "string",
                     "default": "onSave",
                     "enum": [
@@ -124,43 +124,43 @@
                     ],
                     "markdownDescription": "When to run `phpcs`."
                 },
-                "phpsab.snifferTypeDelay": {
+                "phpsab.docker.snifferTypeDelay": {
                     "type": "number",
                     "default": 250,
                     "minimum": 0,
-                    "markdownDescription": "When `phpsab.snifferMode` is `onType`, this sets the amount of milliseconds the validator will wait after typing has stopped before it will run."
+                    "markdownDescription": "When `phpsab.docker.snifferMode` is `onType`, this sets the amount of milliseconds the validator will wait after typing has stopped before it will run."
                 },
-                "phpsab.snifferShowSources": {
+                "phpsab.docker.snifferShowSources": {
                     "type": "boolean",
                     "default": false,
                     "description": "Control if phpcs report should include sniff sources."
                 },
-                "phpsab.debug": {
+                "phpsab.docker.debug": {
                     "type": "boolean",
                     "default": false,
                     "description": "Write debug info to the console"
                 },
-                "phpsab.dockerEnabled": {
+                "phpsab.docker.dockerEnabled": {
                     "type": "boolean",
                     "default": false,
                     "description": "Use docker to run phpcs and phpcbf"
                 },
-                "phpsab.dockerContainer": {
+                "phpsab.docker.dockerContainer": {
                     "type": "string",
                     "default": "",
                     "description": "Docker container name"
                 },
-                "phpsab.dockerWorkspaceRoot": {
+                "phpsab.docker.dockerWorkspaceRoot": {
                     "type": "string",
                     "default": "",
                     "description": "Docker workspace root"
                 },
-                "phpsab.dockerExecutablePathCBF": {
+                "phpsab.docker.dockerExecutablePathCBF": {
                     "type": "string",
                     "default": "",
                     "description": "Docker phpcbf executable path"
                 },
-                "phpsab.dockerExecutablePathCS": {
+                "phpsab.docker.dockerExecutablePathCS": {
                     "type": "string",
                     "default": "",
                     "description": "Docker phpcs executable path"
