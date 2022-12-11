@@ -16,4 +16,9 @@ export interface ResourceSettings {
     standard: string | null;
     autoRulesetSearch: boolean;
     allowedAutoRulesets: string[];
+    dockerContainer: string;
+    dockerWorkspaceRoot: string;
+    dockerEnabled: boolean;
+    dockerExecutablePathCBF?: string;
+    dockerExecutablePathCS?: string;
 }

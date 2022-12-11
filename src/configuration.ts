@@ -11,13 +11,14 @@ import { Logger, LogLevel } from "./logger";
 import { ResourceSettings } from "./interfaces/resource-settings";
 import { PathResolver } from "./resolvers/path-resolver";
 import { workspace, WorkspaceConfiguration, Uri } from "vscode";
+import { DockerPathResolver } from "./resolvers/docker-path-resolver";
 
 export class Configuration {
     debug: boolean;
     config: WorkspaceConfiguration;
 
     constructor(private logger: Logger) {
-        this.config = workspace.getConfiguration("phpsab");
+        this.config = workspace.getConfiguration("phpsab.docker");
         this.debug = this.config.get("debug", false);
     }
 
@@ -37,7 +38,7 @@ export class Configuration {
             index++
         ) {
             const resource = workspace.workspaceFolders[index].uri;
-            const config = workspace.getConfiguration("phpsab", resource);
+            const config = workspace.getConfiguration("phpsab.docker", resource);
             const rootPath = this.resolveRootPath(resource);
             let settings: ResourceSettings = {
                 fixerEnable: config.get("fixerEnable", true),
@@ -49,7 +50,7 @@ export class Configuration {
                     "composerJsonPath",
                     "composer.json"
                 ),
-                standard: config.get("standard", ""),
+                standard: "Squiz",
                 autoRulesetSearch: config.get("autoRulesetSearch", true),
                 allowedAutoRulesets: config.get("allowedAutoRulesets", [
                     ".phpcs.xml",
@@ -59,10 +60,16 @@ export class Configuration {
                 ]),
                 snifferEnable: config.get("snifferEnable", true),
                 snifferArguments: config.get("snifferArguments", []),
+                dockerEnabled: config.get("dockerEnabled", false),
+                dockerContainer: config.get("dockerContainer", ""),
+                dockerWorkspaceRoot: config.get("dockerWorkspaceRoot", ""),
+                dockerExecutablePathCBF: config.get("dockerExecutablePathCBF", ""),
+                dockerExecutablePathCS: config.get("dockerExecutablePathCS", ""),
             };
-
             settings = await this.resolveCBFExecutablePath(settings);
             settings = await this.resolveCSExecutablePath(settings);
+            settings = this.resolveDockerCBFExecutablePath(settings);
+            settings = this.resolveDockerCSExecutablePath(settings);
 
             settings = await this.validate(
                 settings,
@@ -143,6 +150,30 @@ export class Configuration {
         return settings;
     }
 
+    protected resolveDockerCBFExecutablePath(
+        settings: ResourceSettings
+    ): ResourceSettings{
+        const { dockerEnabled, dockerExecutablePathCBF, executablePathCBF } = settings;
+
+        if (dockerEnabled && dockerExecutablePathCBF === "") {
+            settings.dockerExecutablePathCBF = new DockerPathResolver(executablePathCBF, settings).resolveDocker();
+        }
+
+        return settings;
+    }
+
+    protected resolveDockerCSExecutablePath(
+        settings: ResourceSettings
+    ): ResourceSettings{
+        const { dockerEnabled, dockerExecutablePathCS, executablePathCS } = settings;
+
+        if (dockerEnabled && dockerExecutablePathCS === "") {
+            settings.dockerExecutablePathCS = new DockerPathResolver(executablePathCS, settings).resolveDocker();
+        }
+
+        return settings;
+    }
+
     private async validate(
         settings: ResourceSettings,
         resource: string
@@ -161,6 +192,7 @@ export class Configuration {
             this.logger.logInfo("The phpcbf executable was not found for " + resource);
             settings.fixerEnable = false;
         }
+        settings.fixerEnable = true;
         return settings;
     }
 

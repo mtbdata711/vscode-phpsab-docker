@@ -7,6 +7,7 @@
 import * as spawn from "cross-spawn";
 import { Configuration } from "./configuration";
 import { Settings } from "./interfaces/settings";
+import { SpawnArguments } from "./interfaces/spawn-arguments";
 import { StandardsPathResolver } from "./resolvers/standards-path-resolver";
 import { ConsoleError } from "./interfaces/console-error";
 import {
@@ -22,6 +23,7 @@ import {
 } from "vscode";
 import { SpawnSyncOptions } from "child_process";
 import { Logger } from "./logger";
+import { DockerPathResolver } from "./resolvers/docker-path-resolver";
 export class Fixer {
     public config!: Settings;
 
@@ -44,7 +46,7 @@ export class Fixer {
      */
     public async loadSettings(event: ConfigurationChangeEvent) {
         if (
-            !event.affectsConfiguration("phpsab") &&
+            !event.affectsConfiguration("phpsab.docker") &&
             !event.affectsConfiguration("editor.formatOnSaveTimeout")
         ) {
             return;
@@ -64,12 +66,25 @@ export class Fixer {
         standard: string,
         additionalArguments: string[]
     ) {
+        const uri = document.uri;
+        const workspaceFolder = workspace.getWorkspaceFolder(uri);
+
+        if (!workspaceFolder) {
+            return [];
+        }
+        const resourceConf = this.config.resources[workspaceFolder.index];
+        const isDockerEnabled: boolean = resourceConf.dockerEnabled || false;
+        const hasStandard: boolean = standard !== "";
+
         // Process linting paths.
         let filePath = document.fileName;
 
+        if( isDockerEnabled ) {
+            filePath = new DockerPathResolver(filePath, resourceConf).resolveDocker();
+        }
         let args = [];
         args.push("-q");
-        if (standard !== "") {
+        if (hasStandard) {
             args.push("--standard=" + standard);
         }
         args.push(`--stdin-path=${filePath}`);
@@ -99,7 +114,6 @@ export class Fixer {
             return "";
         }
         this.logger.time("Fixer");
-
         const additionalArguments = resourceConf.fixerArguments.filter(
             (arg) => {
                 if (
@@ -143,16 +157,33 @@ export class Fixer {
                 lintArgs.join(" ")
         );
 
-        const fixer = spawn.sync(
-            resourceConf.executablePathCBF,
-            lintArgs,
-            options
-        );
+        const isDockerEnabled = resourceConf.dockerEnabled || false;
+        
+        const fixerArgs: SpawnArguments = {
+            command: "",
+            args: [],
+            spawnOptions: options
+        };
+
+        if( isDockerEnabled ) {
+            const dockerContainer = resourceConf.dockerContainer || "";
+            const dockerExecutablePathCBF = resourceConf.dockerExecutablePathCBF || "";
+            const dockerCommands = ["exec", "-i", dockerContainer, dockerExecutablePathCBF, ...lintArgs];
+            fixerArgs.command = "docker";
+            fixerArgs.args = dockerCommands;
+        }else{
+            fixerArgs.command = resourceConf.executablePathCBF;
+            fixerArgs.args = lintArgs;
+        }
+
+        const {command, args, spawnOptions} = fixerArgs;
+        const fixer = spawn.sync(command, args, spawnOptions);
         const stdout = fixer.stdout.toString().trim();
 
         let fixed = stdout + "\n";
 
         let errors: { [key: number]: string } = {
+            1: `FIXER: Error response from ${resourceConf.dockerContainer}. Is the container running?`,
             3: "FIXER: A general script execution error occurred.",
             16: "FIXER: Configuration error of the application.",
             32: "FIXER: Configuration error of a Fixer.",
@@ -199,6 +230,10 @@ export class Fixer {
                 break;
             }
             case 1: {
+                if( fixed === "\n"  ){
+                    error = errors[fixer.status];
+                    break;
+                }
                 if (fixed.length > 0 && fixed !== fileText) {
                     result = fixed;
                     message = "All fixable errors were fixed correctly.";

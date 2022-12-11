@@ -22,11 +22,17 @@ import {
 } from "vscode";
 import { Configuration } from "./configuration";
 import { Settings } from "./interfaces/settings";
-import { PHPCSReport, PHPCSMessageType } from "./interfaces/phpcs-report";
+import {
+    PHPCSReport,
+    PHPCSMessageType,
+    PHPCSFileStatus,
+} from "./interfaces/phpcs-report";
+import { SpawnArguments } from "./interfaces/spawn-arguments";
 import { StandardsPathResolver } from "./resolvers/standards-path-resolver";
 import { spawn } from "child_process";
 import { debounce } from "lodash";
 import { Logger } from "./logger";
+import { DockerPathResolver } from "./resolvers/docker-path-resolver";
 
 const enum runConfig {
     save = "onSave",
@@ -36,9 +42,8 @@ const enum runConfig {
 export class Sniffer {
     public config!: Settings;
 
-    private diagnosticCollection: DiagnosticCollection = languages.createDiagnosticCollection(
-        "php"
-    );
+    private diagnosticCollection: DiagnosticCollection =
+        languages.createDiagnosticCollection("php");
 
     /**
      * The active validator listener.
@@ -94,7 +99,7 @@ export class Sniffer {
      * @param event - The configuration change event.
      */
     protected async onConfigChange(event: ConfigurationChangeEvent) {
-        if (!event.affectsConfiguration("phpsab")) {
+        if (!event.affectsConfiguration("phpsab.docker")) {
             return;
         }
 
@@ -103,8 +108,8 @@ export class Sniffer {
         this.config = config;
 
         if (
-            event.affectsConfiguration("phpsab.snifferMode") ||
-            event.affectsConfiguration("phpsab.snifferTypeDelay")
+            event.affectsConfiguration("phpsab.docker.snifferMode") ||
+            event.affectsConfiguration("phpsab.docker.snifferTypeDelay")
         ) {
             this.setValidatorListener();
         }
@@ -129,9 +134,8 @@ export class Sniffer {
                 },
                 delay
             );
-            this.validatorListener = workspace.onDidChangeTextDocument(
-                validator
-            );
+            this.validatorListener =
+                workspace.onDidChangeTextDocument(validator);
         } else {
             this.validatorListener = workspace.onDidSaveTextDocument(
                 this.validate,
@@ -163,14 +167,35 @@ export class Sniffer {
      * @param fileName
      * @param standard
      */
-    private getArgs(document: TextDocument, standard: string, additionalArguments: string[]) {
+    private getArgs(
+        document: TextDocument,
+        standard: string,
+        additionalArguments: string[]
+    ) {
+        const uri = document.uri;
+        const workspaceFolder = workspace.getWorkspaceFolder(uri);
+
+        if (!workspaceFolder) {
+            return [];
+        }
+
+        const resourceConf = this.config.resources[workspaceFolder.index];
+        const isDockerEnabled: boolean = resourceConf.dockerEnabled || false;
+        const hasStandard: boolean = standard !== "";
         // Process linting paths.
         let filePath = document.fileName;
+
+        if (isDockerEnabled) {
+            filePath = new DockerPathResolver(
+                filePath,
+                resourceConf
+            ).resolveDocker();
+        }
 
         let args = [];
         args.push("--report=json");
         args.push("-q");
-        if (standard !== "") {
+        if (hasStandard) {
             args.push("--standard=" + standard);
         }
         args.push(`--stdin-path=${filePath}`);
@@ -198,18 +223,21 @@ export class Sniffer {
         }
         this.logger.time("Sniffer");
 
-        const additionalArguments = resourceConf.snifferArguments.filter((arg) => {
-            if (arg.indexOf('--report') === -1 &&
-                arg.indexOf('--standard') === -1 &&
-                arg.indexOf('--stdin-path') === -1 &&
-                arg !== '-q' &&
-                arg !== '-'
-            ) {
-                return true;
-            }
+        const additionalArguments = resourceConf.snifferArguments.filter(
+            (arg) => {
+                if (
+                    arg.indexOf("--report") === -1 &&
+                    arg.indexOf("--standard") === -1 &&
+                    arg.indexOf("--stdin-path") === -1 &&
+                    arg !== "-q" &&
+                    arg !== "-"
+                ) {
+                    return true;
+                }
 
-            return false;
-        });
+                return false;
+            }
+        );
 
         const oldRunner = this.runnerCancellations.get(document.uri);
         if (oldRunner) {
@@ -226,6 +254,7 @@ export class Sniffer {
             resourceConf,
             this.logger
         ).resolve();
+
         const lintArgs = this.getArgs(document, standard, additionalArguments);
 
         let fileText = document.getText();
@@ -239,15 +268,40 @@ export class Sniffer {
             encoding: "utf8",
             tty: true,
         };
+
+        const isDockerEnabled: boolean = resourceConf.dockerEnabled || false;
+
+        const snifferArgs: SpawnArguments = {
+            command: "",
+            args: [],
+            spawnOptions: options,
+        };
+
+        if (isDockerEnabled) {
+            const dockerContainer = resourceConf.dockerContainer || "";
+            const dockerExecutablePathCS =
+                resourceConf.dockerExecutablePathCS || "";
+            const dockerCommand = [
+                "exec",
+                "-i",
+                dockerContainer,
+                dockerExecutablePathCS,
+                ...lintArgs,
+            ];
+            snifferArgs.command = "docker";
+            snifferArgs.args = dockerCommand;
+        } else {
+            snifferArgs.command = resourceConf.executablePathCS;
+            snifferArgs.args = lintArgs;
+        }
+
+        const { command, args, spawnOptions } = snifferArgs;
         this.logger.logInfo(
-            "SNIFFER COMMAND: " +
-                        resourceConf.executablePathCS +
-                        " " +
-                        lintArgs.join(" ")
+            `SNIFFER COMMAND: ${snifferArgs.command} ${snifferArgs.args.join(
+                " "
+            )}`
         );
-
-        const sniffer = spawn(resourceConf.executablePathCS, lintArgs, options);
-
+        const sniffer = spawn(command, args, spawnOptions);
         sniffer.stdin.write(fileText);
         sniffer.stdin.end();
 
@@ -257,15 +311,37 @@ export class Sniffer {
         sniffer.stdout.on("data", (data) => (stdout += data));
         sniffer.stderr.on("data", (data) => (stderr += data));
 
-        const done = new Promise((resolve, reject) => {
+        const done = new Promise<void>((resolve, reject) => {
             sniffer.on("close", () => {
-                if (token.isCancellationRequested || !stdout) {
-                    resolve();
-                    return;
-                }
-                const diagnostics: Diagnostic[] = [];
+                const diagnostics: Diagnostic[] =  [];
                 try {
-                    const { files }: PHPCSReport = JSON.parse(stdout);
+                    if (
+                        stderr.length > 0 &&
+                        isDockerEnabled
+                    ) {
+                        throw new Error(
+                            "Docker error: Please check your configuration."
+                        );
+                    }
+                    if (token.isCancellationRequested || !stdout) {
+                        resolve();
+                        return;
+                    }
+
+                    let { files }: PHPCSReport = JSON.parse(stdout);
+                    if (isDockerEnabled) {
+                        files = Object.entries(files).reduce(
+                            (carry, [file, messages]) => {
+                                const remappedKey = new DockerPathResolver(
+                                    file,
+                                    resourceConf
+                                ).resolveLocal();
+                                carry[remappedKey] = messages;
+                                return carry;
+                            },
+                            {} as { [key: string]: PHPCSFileStatus }
+                        );
+                    }
                     for (const file in files) {
                         files[file].messages.forEach(
                             ({ message, line, column, type, source }) => {
@@ -305,7 +381,11 @@ export class Sniffer {
                     if (stderr) {
                         message += `${stderr}\n`;
                     }
-                    message += error.toString();
+                    // check if error is an object that has a toString method
+                    if (error && typeof error === "object" && error.toString) {
+                        message += error.toString();
+                    }
+
                     window.showErrorMessage(message);
                     this.logger.logError(message);
                     reject(message);
