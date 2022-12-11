@@ -1,307 +1,69 @@
-# PHP Sniffer & Beautifier for VS Code
+# PHP Sniffer & Beautifier Docker
 
-[![Current Version](https://vsmarketplacebadge.apphb.com/version/ValeryanM.vscode-phpsab.svg)](https://marketplace.visualstudio.com/items?itemName=ValeryanM.vscode-phpsab)
-[![Install Count](https://vsmarketplacebadge.apphb.com/installs/ValeryanM.vscode-phpsab.svg)](https://marketplace.visualstudio.com/items?itemName=ValeryanM.vscode-phpsab)
-[![Open Issues](https://vsmarketplacebadge.apphb.com/rating/ValeryanM.vscode-phpsab.svg)](https://marketplace.visualstudio.com/items?itemName=ValeryanM.vscode-phpsab)
+This extension is a fork of [PHP Sniffer & Beautifier for VS Code](https://github.com/valeryan/vscode-phpsab)
 
-This linter plugin for [Visual Studio Code](https://code.visualstudio.com/) provides an interface to [phpcs & phpcbf](http://pear.php.net/package/PHP_CodeSniffer/). It will be used with files that have the “PHP” language mode. This extension is designed to use auto configuration search mechanism to apply rulesets to files within a workspace. This is useful for developers who work with many different projects that have different coding standards.
+This plugin for [Visual Studio Code](https://code.visualstudio.com/) allows you to view linting errors and run code fixes from [phpcs & phpcbf](http://pear.php.net/package/PHP_CodeSniffer/) running in a Docker container within your local VS Code editor.
 
-## Maintenance Status
-A while ago I moved on from PHP and now work in DotNet. I don't currently have the bandwidth to work on this project. As far as I can tell this project is still fully functional in its current state. If you want to take over this project or just be an additionly maintainer and help solve any of the issues that are present, please contact me.
+This is useful for cases where you are developing in a Docker container but do not want to run / are not able to do your development within a [Dev Container](https://code.visualstudio.com/docs/devcontainers/containers).
 
-## Installation
+This extension maintains compatibility with [PHP Sniffer & Beautifier for VS Code](https://github.com/valeryan/vscode-phpsab) with some code tweaks to extend it to work with Docker.
 
-Visual Studio Code must be installed in order to use this plugin. If Visual Studio Code is not installed, please follow the instructions [here](https://code.visualstudio.com/Docs/editor/setup).
+## Docker settings
 
-## Usage
+To enable linting from within a Docker container the extension provides a number of settings that need to be added to your `settings.json` file in VS Code.  
 
-<kbd>F1</kbd> -> `PHPCBF: Fix this file`
+| Setting | Description | Default Value 
+|--|--|--|
+| phpsab.docker.dockerEnabled | Whether to enable Docker functionality  | false
+|phpsab.docker.dockerContainer| Name of the running Docker container for the current project | ""
+|phpsab.docker.dockerWorkspaceRoot| Path to your current working directory within your Docker container | ""
+|phpsab.docker.dockerExecutablePathCBF| (Optional) phpcbf executable path within your Docker container | ""
+|phpsab.docker.dockerExecutablePathCS| (Optional) phpcs executable path within your Docker container | ""
 
-or keyboard shortcut `alt+shift+f` vs code default formatter shortcut
-
-or right mouse context menu `Format Document`.
-
-### Format on save
-You can also use this formatter with Format on Save enabled. Format on save has two modes: `File` and `Modified`. This extension implements support for the modified mode by using phpcbf with the `Git Modified` filter that is provided by phpcbf. 
-
-## Multi-Root Workspace Support
-This extension now fully supports Multi-Root Workspaces. The extension previously used the first root folder in your workspace to configure and run both phpcs and phpcbf. The new system allows each workspace to be configured and run independently with respect to the root folder of the open file being sniffed. This means you can have phpcs functionality in one folder and have it disabled in another within a workspace.
-
-## Linter Installation
-
-Before using this plugin, you must ensure that `phpcs` is installed on your system. The preferred method is using [composer](https://getcomposer.org/) for both system-wide and project-wide installations.
-
-Once phpcs is installed, you can proceed to install the vscode-phpsab plugin if it is not yet installed.
-
-> **NOTE:** This plugin can detect whether your project has been set up to use phpcbf via composer and use the project specific `phpcs & phpcbf` over the system-wide installation of `phpcs & phpcbf` automatically. This feature requires that both composer.json and composer.lock file exist in your workspace root or the `phpsab.composerJsonPath` in order to check for the composer dependency. If you wish to bypass this feature you can set the `phpsab.executablePathCS` and `phpsab.executablePathCBF` configuration settings.
-
-> **NOTE:** `phpcbf` is installed along with `phpcs`.
-
-### System-wide Installation
-
-The `phpcs` linter can be installed globally using the Composer Dependency Manager for PHP.
-
-1. Install [composer](https://getcomposer.org/doc/00-intro.md).
-1. Require `phpcs` package by typing the following in a terminal:
-
-    ```bash
-    composer global require squizlabs/php_codesniffer
-    ```
-1. You must specifically add the phpcs and phpcbf that you want to used to the global PATH on your system for the extension to auto detect them or set the executablePath for phpcs and phpcbf manually.
-
-### Project-wide Installation
-
-The `phpcs` linter can be installed in your project using the Composer Dependency Manager for PHP.
-
-1. Install [composer](https://getcomposer.org/doc/00-intro.md).
-1. Require `phpcs` package by typing the following at the root of your project in a terminal:
-
-    ```bash
-    composer require --dev squizlabs/php_codesniffer
-    ```
-
-### Plugin Installation
-
-1. Open Visual Studio Code.
-1. Press `Ctrl+P` on Windows or `Cmd+P` on Mac to open the Quick Open dialog.
-1. Type ext install phpsab to find the extension.
-1. Press Enter or click the cloud icon to install it.
-1. Restart Visual Studio Code!
-
-## Basic Configuration
-
-There are various options that can be configured to control how the plugin operates which can be set
-in your user, workspace or folder preferences.
-
-### **phpsab.fixerEnable**
-
-[ *Scope:* Resource | Optional | *Type:* boolean | *Default:* true ]
-
-This setting controls whether `phpcbf` fixer is enabled.
-
-### **phpsab.fixerArguments**
-[ *Scope:* Resource | Optional | *Type:* string[] | *Default:* [] ]
-
-Passes additional arguments to `phpcbf` runner.
-
-_Example_
-```bash
+For example, if you were developing a WordPress plugin which existed at `/home/<user>/Projects/MyPlugin` which was mounted to `/var/www/html/wp-content/plugins/MyPlugin` within a Docker container named `wordpress`
+you could use the following settings:
+```
 {
-    phpsab.fixerArguments: ["-n", "--ignore=tests/*"]
-}
-    
-# Translated
-phpcbf -n --ignore=tests/* <file>
-```
-
-### **phpsab.snifferEnable**
-
-[ *Scope:* Resource | Optional | *Type:* boolean | *Default:* true ]
-
-This setting controls whether `phpcs` sniffer is enabled.
-
-### **phpsab.snifferArguments**
-[ *Scope:* Resource | Optional | *Type:* string[] | *Default:* [] ]
-
-Passes additional arguments to `phpcs` runner.
-
-_Example_
-```bash
-{
-    phpsab.snifferArguments: ["-n", "--ignore=tests/*"]
-}
-
-# Translated
-phpcs -n --ignore=tests/* <file>
-```
-
-### **phpsab.executablePathCS**
-
-[ *Scope:* Resource | Optional | *Type:* string | *Default:* null ]
-
-This setting controls the executable path for `phpcs`. You may specify the absolute path or workspace relative path to the `phpcs` executable.
-If omitted, the plugin will try to locate the path parsing your composer configuration or look for an entry for 'phpcs' in your path.
-
-> **NOTE:** `phpcbf` is installed along with `phpcs`.
-
-> **NOTE for Windows users:** If the linter is installed globally, you must set the path to make this plugin work (example below). After saving this setting, don't forget to reload VSCode!
-```
-"C:\\Users\\enter-your-username-here\\AppData\\Roaming\\Composer\\vendor\\bin\\phpcs.bat"
-```
-
-### **phpsab.executablePathCBF**
-
-[ *Scope:* Resource | Optional | *Type:* string | *Default:* null ]
-
-This setting controls the executable path for the `phpcbf`. You may specify the absolute path or workspace relative path to the `phpcbf` executable.
-If omitted, the plugin will try to locate the path parsing your composer configuration or look for an entry for 'phpcbf' in your path..
-
-> **NOTE for Windows users:** If the linter is installed globally, you must set the path to make this plugin work (example below). After saving this setting, don't forget to reload VSCode!
-```
-"C:\\Users\\enter-your-username-here\\AppData\\Roaming\\Composer\\vendor\\bin\\phpcbf.bat"
-```
-
-### **phpsab.standard**
-
-[ *Scope:* Resource | Optional | *Type:* string | *Default:* null ]
-
-This setting controls the coding standard used by `phpcbf`. You may specify the name, absolute path or workspace relative path of the coding standard to use.
-
-> **NOTE:** While using composer dependency manager over global installation make sure you use the phpcbf commands under your project scope !
-
-The following values are applicable:
-
-1. This setting can be set to `null`, which is the default behavior and uses the `default_standard` when set in the `phpcs` configuration or fallback to the `Pear` coding standard.
-
-    ```json
-    {
-        "phpsab.standard": null
-    }
-    ```
-
-    You may set the `default_standard` used by phpcbf using the following command:
-
-    ```bash
-    phpcs --config-set default_standard <value>
-    ```
-
-    or when using composer dependency manager from the root of your project issue the following command:
-
-    ```bash
-    ./vendor/bin/phpcs --config-set default_standard <value>
-    ```
-
-1. The setting can be set to the name of a built-in coding standard ( ie. `MySource`, `PEAR`, `PHPCS`, `PSR1`, `PSR2`, `Squiz`, `Zend` ) and you are good to go.
-
-    ```json
-    {
-        "phpsab.standard": "PSR2"
-    }
-    ```
-
-1. The setting can be set to the name of a custom coding standard ( ie. `WordPress`, `Drupal`, etc. ). In this case you must ensure that the specified coding standard is installed and accessible by `phpcbf`.
-
-    ```json
-    {
-        "phpsab.standard": "WordPress"
-    }
-    ```
-
-    After you install the custom coding standard, you can make it available to phpcbf by issuing the following command:
-
-    ```bash
-    phpcs --config-set installed_paths <path/to/custom/coding/standard>
-    ```
-
-    or when using composer dependency manager from the root of your project issue the following command:
-
-    ```bash
-    ./vendor/bin/phpcs --config-set installed_paths <path/to/custom/coding/standard>
-    ```
-
-1. The setting can be set to the absolute path to a custom coding standard:
-
-    ```json
-    {
-        "phpsab.standard": "/path/to/coding/standard"
-    }
-    ```
-
-    or you can use the path to a custom ruleset:
-
-    ```json
-    {
-        "phpsab.standard": "/path/to/project/phpcs.xml"
-    }
-    ```
-
-1. The setting can be set to your workspace relative path to a custom coding standard:
-
-    ```json
-    {
-        "phpsab.standard": "./vendor/path/to/coding/standard"
-    }
-    ```
-
-    or you can use the path to your project's custom ruleset:
-
-    ```json
-    {
-        "phpsab.standard": "./phpcs.xml"
-    }
-    ```
-
-### **phpsab.autoRulesetSearch**
-
-[ *Scope:* Resource | Optional | *Type:* boolean | *Default:* true ]
-
-Automatically search for any `.phpcs.xml`, `.phpcs.xml.dist`, `phpcs.xml`, `phpcs.xml.dist`, `phpcs.ruleset.xml` or `ruleset.xml` file to use as configuration. Overrides `phpsab.standard` configuration when a ruleset is found. If `phpcs` finds a configuration file through auto search this extension should similarly find that configuration file and apply fixes based on the same configuration.
-
-> **NOTE:** This option does not apply for unsaved documents (in-memory). Also, the name of files that are searched for is configurable in this extension.
-
-### **phpsab.allowedAutoRulesets**
-
-[ *Scope:* Resource | Optional | *Type:* array | *Default:* [] ]
-
-An array of filenames that could contain a valid phpcs ruleset.
-
-```json
-{
-    "phpsab.allowedAutoRulesets": ["phpcs.xml", "special.xml"]
+	"phpsab.docker.dockerEnabled": true,
+	"phpsab.docker.dockerContainer": "wordpress",
+	"phpsab.docker.dockerWorkspaceRoot": "/var/www/html/wp-content/plugins/MyPlugin"
 }
 ```
 
-### **phpsab.snifferMode**
+This extension assumes that you are intending to run phpcs & phpcbf within the Docker container of the project you are currently developing. 
 
-[ *Scope:* All | Optional | *Type:* string | *Default:* onSave ]
+Under the hood, all phpcs and phpcbf commands are run within the Docker container listed in the `phpsab.docker.dockerContainer` and then forwarded to your local files.
 
-Enum dropdown options to set Sniffer Mode to `onSave` or `onType`.
+As such, it is recommended that these are added in each project that you work on in a `.vscode` directory rather than as a global setting.
 
-1. `onSave`: The Sniffer will only update diagnostics when the document is saved.
+For documentation on adding a `setting.json` file to your Workspace using the `.vscode` directory see the [User and Workspace Settings](https://code.visualstudio.com/docs/getstarted/settings#_workspace-settingsjson-location) docs for VS Code.
 
-1. `onType`: The Sniffer will update diagnostics as you type in a document.
+## PHP Sniffer & Beautifier Settings
 
-### **phpsab.snifferTypeDelay**
+Setting properties have been tweaked for this plugin. See changed property names for PHP Sniffer & Beautifier Docker below.
 
-[ *Scope:* All | Optional | *Type:* number | *Default:* 250 ]
+| phpsab setting | phpsab-docker setting | Default value |
+|--|--|--
+| phpsab.fixerEnable  |phpsab.docker.fixerEnable |  true
+| phpsab.fixerArguments | phpsab.docker.fixerArguments | []
+| phpsab.executablePathCBF | phpsab.docker.executablePathCBF | null
+| phpsab.executablePathCS | phpsab.docker.executablePathCS | null
+| phpsab.composerJsonPath | phpsab.docker.composerJsonPath | composer.json
+| phpsab.standard | phpsab.docker.standard | null
+| phpsab.autoRulesetSearch | phpsab.docker.autoRulesetSearch | true
+|phpsab.allowedAutoRulesets | phpsab.docker.allowedAutoRulesets | [ ".phpcs.xml", ".phpcs.xml.dist", "phpcs.xml", "phpcs.xml.dist", "phpcs.ruleset.xml", "ruleset.xml" ]
+| phpsab.snifferEnable | phpsab.docker.snifferEnable | true
+|phpsab.snifferArguments | phpsab.docker.snifferArguments | []
+|phpsab.snifferMode|phpsab.docker.snifferMode|onSave
+|phpsab.snifferTypeDelay|phpsab.docker.snifferTypeDelay|250
+|phpsab.snifferShowSources|phpsab.docker.snifferShowSources|false
+|phpsab.debug|phpsab.docker.debug|false
 
-When `snifferMode` is `onType` this setting controls how long to wait after typing stops to update. The number represents milliseconds.
 
-### **phpsab.snifferShowSources**
-
-[ *Scope:* All | Optional | *Type:* boolean | *Default:* false ]
-
-Determines if the Sniffer includes the source of the diagnostic data with error messages.
-
-## Advanced Configuration
-
-### **phpsab.composerJsonPath**
-
-[ *Scope:* Resource | Optional | *Type:* string | *Default:* composer.json ]
-
-This setting allows you to override the path to your composer.json file when it does not reside at the workspace root. You may specify the absolute path or workspace relative path to the `composer.json` file.
-
-## Diagnosing common errors
-
-### **phpsab.debug**
-
-[ *Scope:* All | Optional | *Type:* boolean | Default: false ]
-
-Write debug information to the PHP Sniffer & Beautifier output channel and enable the display extra notices.
-
-### The phpcs report contains invalid json
-
-This error occurs when something goes wrong in phpcs execution such as PHP Notices, PHP Fatal Exceptions, Other Script Output, etc, most of which can be detected as follows:
-
-Execute the phpcbf command in your terminal with --report=json and see whether the output contains anything other than valid json.
+For full documentation, please see the docs in the original  [PHP Sniffer & Beautifier for VS Code](https://github.com/valeryan/vscode-phpsab) extension repo.
 
 ## Acknowledgements
 
-This extension is based off of the `phpcs` extension created by [Ioannis Kappas](https://github.com/ikappas/vscode-phpcs/), the `PHP Sniffer` extension create by [wongjn](https://github.com/wongjn/vscode-php-sniffer) and the existing `phpcbf` extension by [Per Søderlind](https://github.com/soderlind/vscode-phpcbf). It uses some portions of these extensions to provide the `phpcs & phpcbf` functionality with auto config search.
+  
 
-## Contributing and Licensing
-
-The project is hosted on [GitHub](https://github.com/valeryan/vscode-phpsab) where you can [report issues](https://github.com/valeryan/vscode-phpsab/issues), fork
-the project and submit pull requests. See the [development guide](https://github.com/valeryan/vscode-phpsab/blob/master/DEVELOPMENT.md) for details.
-
-The project is available under [MIT license](https://github.com/valeryan/vscode-phpsab/blob/master/LICENSE.md), which allows modification and redistribution for both commercial and non-commercial purposes.
+This extension is based off of the  [PHP Sniffer & Beautifier for VS Code](https://github.com/valeryan/vscode-phpsab) extension.
