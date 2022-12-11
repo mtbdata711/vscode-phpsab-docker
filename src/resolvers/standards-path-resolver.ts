@@ -11,6 +11,7 @@ import { PathResolverBase } from "./path-resolver-base";
 import { TextDocument, workspace } from "vscode";
 import { ResourceSettings } from "../interfaces/resource-settings";
 import { Logger } from "../logger";
+import { DockerPathResolver } from "./docker-path-resolver";
 
 export class StandardsPathResolver extends PathResolverBase {
     constructor(
@@ -30,6 +31,8 @@ export class StandardsPathResolver extends PathResolverBase {
         let resolvedPath: string | null = null;
         const resource = this.document.uri;
         const folder = workspace.getWorkspaceFolder(resource);
+        const { dockerEnabled } = this.config;
+
         if (!folder) {
             return "";
         }
@@ -67,7 +70,8 @@ export class StandardsPathResolver extends PathResolverBase {
         for (let i = 0, len = files.length; i < len; i++) {
             let c = files[i];
             if (fs.existsSync(c)) {
-                return (resolvedPath = c);
+                resolvedPath = c;
+                return ! dockerEnabled ? resolvedPath : ( new DockerPathResolver(resolvedPath, this.config ) ).resolveDocker();
             }
         }
 

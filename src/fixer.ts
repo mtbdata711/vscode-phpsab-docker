@@ -7,7 +7,7 @@
 import * as spawn from "cross-spawn";
 import { Configuration } from "./configuration";
 import { Settings } from "./interfaces/settings";
-import { SpawnArguments } from "./interfaces/spawn-options";
+import { SpawnArguments } from "./interfaces/spawn-arguments";
 import { StandardsPathResolver } from "./resolvers/standards-path-resolver";
 import { ConsoleError } from "./interfaces/console-error";
 import {
@@ -23,7 +23,7 @@ import {
 } from "vscode";
 import { SpawnSyncOptions } from "child_process";
 import { Logger } from "./logger";
-import * as path from "path";
+import { DockerPathResolver } from "./resolvers/docker-path-resolver";
 export class Fixer {
     public config!: Settings;
 
@@ -46,7 +46,7 @@ export class Fixer {
      */
     public async loadSettings(event: ConfigurationChangeEvent) {
         if (
-            !event.affectsConfiguration("phpsab") &&
+            !event.affectsConfiguration("phpsab.docker") &&
             !event.affectsConfiguration("editor.formatOnSaveTimeout")
         ) {
             return;
@@ -72,26 +72,19 @@ export class Fixer {
         if (!workspaceFolder) {
             return [];
         }
+        const resourceConf = this.config.resources[workspaceFolder.index];
+        const isDockerEnabled: boolean = resourceConf.dockerEnabled || false;
+        const hasStandard: boolean = standard !== "";
+
         // Process linting paths.
         let filePath = document.fileName;
 
-        const resourceConf = this.config.resources[workspaceFolder.index];
-
-        const isDockerEnabled: boolean = resourceConf.dockerEnabled || false;
-
-        if (isDockerEnabled) {
-            const dockerWorkspaceRoot: string = resourceConf.dockerWorkspaceRoot || "";
-            // get workspace root from workspace folder
-            const workspaceRoot = workspaceFolder.uri.fsPath;
-            // get the relative path to the file
-            const relativePath = path.relative(workspaceRoot, uri.fsPath);
-            // replace workspace root with docker workspace root
-            filePath = path.join(dockerWorkspaceRoot, relativePath);
+        if( isDockerEnabled ) {
+            filePath = new DockerPathResolver(filePath, resourceConf).resolveDocker();
         }
-
         let args = [];
         args.push("-q");
-        if (standard !== "") {
+        if (hasStandard) {
             args.push("--standard=" + standard);
         }
         args.push(`--stdin-path=${filePath}`);
@@ -190,6 +183,7 @@ export class Fixer {
         let fixed = stdout + "\n";
 
         let errors: { [key: number]: string } = {
+            1: `FIXER: Error response from ${resourceConf.dockerContainer}. Is the container running?`,
             3: "FIXER: A general script execution error occurred.",
             16: "FIXER: Configuration error of the application.",
             32: "FIXER: Configuration error of a Fixer.",
@@ -236,6 +230,10 @@ export class Fixer {
                 break;
             }
             case 1: {
+                if( fixed === "\n"  ){
+                    error = errors[fixer.status];
+                    break;
+                }
                 if (fixed.length > 0 && fixed !== fileText) {
                     result = fixed;
                     message = "All fixable errors were fixed correctly.";
