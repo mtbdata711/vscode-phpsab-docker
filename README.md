@@ -1,3 +1,4 @@
+
 # PHP Sniffer & Beautifier Docker
 
 This extension is a fork of [PHP Sniffer & Beautifier for VS Code](https://github.com/valeryan/vscode-phpsab)
@@ -7,6 +8,30 @@ This plugin for [Visual Studio Code](https://code.visualstudio.com/) allows you 
 This is useful for cases where you are developing in a Docker container but do not want to run / are not able to do your development within a [Dev Container](https://code.visualstudio.com/docs/devcontainers/containers).
 
 This extension maintains compatibility with [PHP Sniffer & Beautifier for VS Code](https://github.com/valeryan/vscode-phpsab) with some code tweaks to extend it to work with Docker.
+
+## Quick start
+
+ - Add a `.vscode` directory to your project if it does not already exist
+ - Create a `settings.json` file within your `.vscode`directory or append extension settings if the file already exists
+ - Insert the following settings
+
+```
+{
+	"phpsab.docker.dockerEnabled": true,
+	"phpsab.docker.dockerContainer": "<container_name or container_id of running Docker container>",
+	"phpsab.docker.dockerWorkspaceRoot": "<path to your projects root directory within the Docker container>"
+}
+```
+
+For example, if you were developing a WordPress plugin which existed at `/home/<user>/Projects/MyPlugin` which was mounted to `/var/www/html/wp-content/plugins/MyPlugin` within a Docker container named `wordpress`
+you could use the following settings:
+```
+{
+	"phpsab.docker.dockerEnabled": true,
+	"phpsab.docker.dockerContainer": "wordpress",
+	"phpsab.docker.dockerWorkspaceRoot": "/var/www/html/wp-content/plugins/MyPlugin"
+}
+```
 
 ## Docker settings
 
@@ -20,19 +45,9 @@ To enable linting from within a Docker container the extension provides a number
 |phpsab.docker.dockerExecutablePathCBF| (Optional) phpcbf executable path within your Docker container | ""
 |phpsab.docker.dockerExecutablePathCS| (Optional) phpcs executable path within your Docker container | ""
 
-For example, if you were developing a WordPress plugin which existed at `/home/<user>/Projects/MyPlugin` which was mounted to `/var/www/html/wp-content/plugins/MyPlugin` within a Docker container named `wordpress`
-you could use the following settings:
-```
-{
-	"phpsab.docker.dockerEnabled": true,
-	"phpsab.docker.dockerContainer": "wordpress",
-	"phpsab.docker.dockerWorkspaceRoot": "/var/www/html/wp-content/plugins/MyPlugin"
-}
-```
-
 This extension assumes that you are intending to run phpcs & phpcbf within the Docker container of the project you are currently developing. 
 
-Under the hood, all phpcs and phpcbf commands are run within the Docker container listed in the `phpsab.docker.dockerContainer` and then forwarded to your local files.
+Under the hood, all phpcs and phpcbf commands are run within the Docker container listed in the `phpsab.docker.dockerContainer` setting and then forwarded to your local files.
 
 As such, it is recommended that these are added in each project that you work on in a `.vscode` directory rather than as a global setting.
 
