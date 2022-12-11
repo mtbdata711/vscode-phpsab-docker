@@ -313,15 +313,14 @@ export class Sniffer {
 
         const done = new Promise<void>((resolve, reject) => {
             sniffer.on("close", () => {
-                const diagnostics: Diagnostic[] = [];
+                const diagnostics: Diagnostic[] =  [];
                 try {
-                    
                     if (
                         stderr.length > 0 &&
-                        stderr.includes("Error response from daemon")
+                        isDockerEnabled
                     ) {
                         throw new Error(
-                            "Docker container not found. Please check your configuration."
+                            "Docker error: Please check your configuration."
                         );
                     }
                     if (token.isCancellationRequested || !stdout) {
