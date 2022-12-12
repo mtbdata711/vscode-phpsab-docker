@@ -50,7 +50,7 @@ export class Configuration {
                     "composerJsonPath",
                     "composer.json"
                 ),
-                standard: "Squiz",
+                standard: config.get("standard", ""),
                 autoRulesetSearch: config.get("autoRulesetSearch", true),
                 allowedAutoRulesets: config.get("allowedAutoRulesets", [
                     ".phpcs.xml",
@@ -192,7 +192,6 @@ export class Configuration {
             this.logger.logInfo("The phpcbf executable was not found for " + resource);
             settings.fixerEnable = false;
         }
-        settings.fixerEnable = true;
         return settings;
     }
 
