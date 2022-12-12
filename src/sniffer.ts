@@ -316,8 +316,10 @@ export class Sniffer {
                 const diagnostics: Diagnostic[] =  [];
                 try {
                     if (
+                        isDockerEnabled &&
+                        typeof stderr === "string" &&
                         stderr.length > 0 &&
-                        isDockerEnabled
+                        ! stderr.toLowerCase().includes("xdebug")
                     ) {
                         throw new Error(
                             "Docker error: Please check your configuration."
