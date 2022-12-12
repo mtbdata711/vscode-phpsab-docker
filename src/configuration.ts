@@ -50,7 +50,7 @@ export class Configuration {
                     "composerJsonPath",
                     "composer.json"
                 ),
-                standard: "Squiz",
+                standard: config.get("standard", ""),
                 autoRulesetSearch: config.get("autoRulesetSearch", true),
                 allowedAutoRulesets: config.get("allowedAutoRulesets", [
                     ".phpcs.xml",
