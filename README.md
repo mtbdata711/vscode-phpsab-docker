@@ -69,7 +69,7 @@ Setting properties have been tweaked for this plugin. See changed property names
 |phpsab.allowedAutoRulesets | phpsab.docker.allowedAutoRulesets | [ ".phpcs.xml", ".phpcs.xml.dist", "phpcs.xml", "phpcs.xml.dist", "phpcs.ruleset.xml", "ruleset.xml" ]
 | phpsab.snifferEnable | phpsab.docker.snifferEnable | true
 |phpsab.snifferArguments | phpsab.docker.snifferArguments | []
-|phpsab.snifferMode|phpsab.docker.snifferMode|onSave
+|phpsab.snifferMode|phpsab.docker.snifferMode|"onSave"
 |phpsab.snifferTypeDelay|phpsab.docker.snifferTypeDelay|250
 |phpsab.snifferShowSources|phpsab.docker.snifferShowSources|false
 |phpsab.debug|phpsab.docker.debug|false

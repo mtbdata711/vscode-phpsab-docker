@@ -192,7 +192,6 @@ export class Configuration {
             this.logger.logInfo("The phpcbf executable was not found for " + resource);
             settings.fixerEnable = false;
         }
-        settings.fixerEnable = true;
         return settings;
     }
 
