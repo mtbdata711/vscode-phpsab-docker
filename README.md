@@ -1,19 +1,20 @@
 
+
 # PHP Sniffer & Beautifier Docker
 
 This extension is a fork of [PHP Sniffer & Beautifier for VS Code](https://github.com/valeryan/vscode-phpsab)
 
 This plugin for [Visual Studio Code](https://code.visualstudio.com/) allows you to view linting errors and run code fixes from [phpcs & phpcbf](http://pear.php.net/package/PHP_CodeSniffer/) running in a Docker container within your local VS Code editor.
 
-This is useful for cases where you are developing in a Docker container but do not want to run / are not able to do your development within a [Dev Container](https://code.visualstudio.com/docs/devcontainers/containers).
+This is useful for cases where you are developing in a Docker container but do not want to run / are not able to run a [Dev Container](https://code.visualstudio.com/docs/devcontainers/containers).
 
 This extension maintains compatibility with [PHP Sniffer & Beautifier for VS Code](https://github.com/valeryan/vscode-phpsab) with some code tweaks to extend it to work with Docker.
 
 ## Quick start
 
  - Add a `.vscode` directory to your project if it does not already exist
- - Create a `settings.json` file within your `.vscode`directory or append extension settings if the file already exists
- - Insert the following settings
+ - Create a `settings.json` file within your `.vscode` directory or append extension settings if the file already exists
+ - Insert the following settings:
 
 ```
 {
@@ -23,8 +24,7 @@ This extension maintains compatibility with [PHP Sniffer & Beautifier for VS Cod
 }
 ```
 
-For example, if you were developing a WordPress plugin which existed at `/home/<user>/Projects/MyPlugin` which was mounted to `/var/www/html/wp-content/plugins/MyPlugin` within a Docker container named `wordpress`
-you could use the following settings:
+For example, if you are developing a WordPress plugin at `/home/<user>/Projects/MyPlugin` on your local system which is mounted to `/var/www/html/wp-content/plugins/MyPlugin` inside a Docker container named `wordpress` you could use the following settings:
 ```
 {
 	"phpsab.docker.dockerEnabled": true,
@@ -35,7 +35,7 @@ you could use the following settings:
 
 ## Docker settings
 
-To enable linting from within a Docker container the extension provides a number of settings that need to be added to your `settings.json` file in VS Code.  
+To enable linting from within a Docker container the extension provides a number of settings that need to be added to your `settings.json` file within the `.vscode` directory of your VS Code workspace.  
 
 | Setting | Description | Default Value 
 |--|--|--|
@@ -45,7 +45,7 @@ To enable linting from within a Docker container the extension provides a number
 |phpsab.docker.dockerExecutablePathCBF| (Optional) phpcbf executable path within your Docker container | ""
 |phpsab.docker.dockerExecutablePathCS| (Optional) phpcs executable path within your Docker container | ""
 
-This extension assumes that you are intending to run phpcs & phpcbf within the Docker container of the project you are currently developing. 
+This extension assumes that you are intending to run phpcs & phpcbf within the Docker container of the project you are currently developing in. 
 
 Under the hood, all phpcs and phpcbf commands are run within the Docker container listed in the `phpsab.docker.dockerContainer` setting and then forwarded to your local files.
 
