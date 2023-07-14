@@ -1,5 +1,4 @@
 
-
 # PHP Sniffer & Beautifier Docker
 
 This extension is a fork of [PHP Sniffer & Beautifier for VS Code](https://github.com/valeryan/vscode-phpsab)
