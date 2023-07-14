@@ -2,7 +2,7 @@
     "name": "vscode-phpsab-docker",
     "displayName": "PHP Sniffer & Beautifier Docker",
     "description": "Docker fork of PHP Sniffer & Beautifier for Visual Studio Code",
-    "version": "0.0.5",
+    "version": "0.0.6",
     "icon": "php_logo.png",
     "publisher": "mtbdata",
     "homepage": "https://github.com/mtbdata711/vscode-phpsab-docker",
