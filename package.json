@@ -165,9 +165,9 @@
                     "default": "",
                     "description": "Docker phpcs executable path"
                 }
-                }
             }
-        },
+        }
+    },
     "scripts": {
         "vscode:prepublish": "webpack --mode production",
         "webpack": "webpack --mode development",
