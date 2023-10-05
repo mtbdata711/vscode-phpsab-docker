@@ -72,6 +72,8 @@ Setting properties have been tweaked for this plugin. See changed property names
 |phpsab.snifferTypeDelay|phpsab.docker.snifferTypeDelay|250
 |phpsab.snifferShowSources|phpsab.docker.snifferShowSources|false
 |phpsab.debug|phpsab.docker.debug|false
+|-|phpsab.docker.useFilepath|false
+|-|phpsab.docker.containerExec|docker
 
 
 For full documentation, please see the docs in the original  [PHP Sniffer & Beautifier for VS Code](https://github.com/valeryan/vscode-phpsab) extension repo.
