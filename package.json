@@ -182,7 +182,7 @@
     },
     "scripts": {
         "vscode:prepublish": "webpack --mode production",
-        "webpack": "NODE_OPTIONS=--openssl-legacy-provider webpack --mode development",
+        "webpack": "webpack --mode development",
         "webpack-dev": "webpack --mode development --watch",
         "lint": "eslint . --ext .ts,.tsx"
     },
