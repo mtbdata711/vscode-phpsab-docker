@@ -79,7 +79,7 @@ export class Fixer {
         // Process linting paths.
         let filePath = document.fileName;
 
-        if( isDockerEnabled ) {
+        if (isDockerEnabled) {
             filePath = new DockerPathResolver(filePath, resourceConf).resolveDocker();
         }
         let args = [];
@@ -87,9 +87,11 @@ export class Fixer {
         if (hasStandard) {
             args.push("--standard=" + standard);
         }
-        args.push(`--stdin-path=${filePath}`);
         args = args.concat(additionalArguments);
+
+        args.push(`--stdin-path=${filePath}`);
         args.push("-");
+
         return args;
     }
 
@@ -152,31 +154,31 @@ export class Fixer {
 
         this.logger.logInfo(
             "FIXER COMMAND: " +
-                resourceConf.executablePathCBF +
-                " " +
-                lintArgs.join(" ")
+            resourceConf.executablePathCBF +
+            " " +
+            lintArgs.join(" ")
         );
 
         const isDockerEnabled = resourceConf.dockerEnabled || false;
-        
+
         const fixerArgs: SpawnArguments = {
             command: "",
             args: [],
             spawnOptions: options
         };
 
-        if( isDockerEnabled ) {
+        if (isDockerEnabled) {
             const dockerContainer = resourceConf.dockerContainer || "";
             const dockerExecutablePathCBF = resourceConf.dockerExecutablePathCBF || "";
             const dockerCommands = ["exec", "-i", dockerContainer, dockerExecutablePathCBF, ...lintArgs];
-            fixerArgs.command = "docker";
+            fixerArgs.command = resourceConf.containerExec;
             fixerArgs.args = dockerCommands;
-        }else{
+        } else {
             fixerArgs.command = resourceConf.executablePathCBF;
             fixerArgs.args = lintArgs;
         }
 
-        const {command, args, spawnOptions} = fixerArgs;
+        const { command, args, spawnOptions } = fixerArgs;
         const fixer = spawn.sync(command, args, spawnOptions);
         const stdout = fixer.stdout.toString().trim();
 
@@ -230,7 +232,7 @@ export class Fixer {
                 break;
             }
             case 1: {
-                if( fixed === "\n"  ){
+                if (fixed === "\n") {
                     error = errors[fixer.status];
                     break;
                 }
