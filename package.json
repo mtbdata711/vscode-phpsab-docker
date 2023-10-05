@@ -2,7 +2,7 @@
     "name": "vscode-phpsab-docker",
     "displayName": "PHP Sniffer & Beautifier Docker",
     "description": "Docker fork of PHP Sniffer & Beautifier for Visual Studio Code",
-    "version": "0.0.6",
+    "version": "0.0.7",
     "icon": "php_logo.png",
     "publisher": "mtbdata",
     "homepage": "https://github.com/mtbdata711/vscode-phpsab-docker",
@@ -45,6 +45,18 @@
             "title": "PHP Sniffer & Fixer Docker Configuration options",
             "type": "object",
             "properties": {
+                "phpsab.docker.useFilepath": {
+                    "scope": "resource",
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Pass filepath instead of contents to binaries."
+                },
+                "phpsab.docker.containerExec": {
+                    "scope": "resource",
+                    "type": "string",
+                    "default": "docker",
+                    "description": "Support drop-in replacements for Docker (i.e.: Podman)"
+                },
                 "phpsab.docker.fixerEnable": {
                     "scope": "resource",
                     "type": "boolean",
@@ -170,7 +182,7 @@
     },
     "scripts": {
         "vscode:prepublish": "webpack --mode production",
-        "webpack": "webpack --mode development",
+        "webpack": "NODE_OPTIONS=--openssl-legacy-provider webpack --mode development",
         "webpack-dev": "webpack --mode development --watch",
         "lint": "eslint . --ext .ts,.tsx"
     },
