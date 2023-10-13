@@ -150,13 +150,6 @@ export class Fixer {
             input: fileText,
         };
 
-        this.logger.logInfo(
-            "FIXER COMMAND: " +
-                resourceConf.executablePathCBF +
-                " " +
-                lintArgs.join(" ")
-        );
-
         const isDockerEnabled = resourceConf.dockerEnabled || false;
         
         const fixerArgs: SpawnArguments = {
@@ -175,6 +168,8 @@ export class Fixer {
             fixerArgs.command = resourceConf.executablePathCBF;
             fixerArgs.args = lintArgs;
         }
+
+        this.logger.logInfo(`FIXER COMMAND: ${fixerArgs.command} ${fixerArgs.args.join(" ")}`);
 
         const {command, args, spawnOptions} = fixerArgs;
         const fixer = spawn.sync(command, args, spawnOptions);
