@@ -198,8 +198,12 @@ export class Sniffer {
         if (hasStandard) {
             args.push("--standard=" + standard);
         }
-        args.push(`--stdin-path=${filePath}`);
-        args.push("-");
+        if (!resourceConf.useFilepath) {
+            args.push(`--stdin-path=${filePath}`);
+            args.push("-");
+        } else {
+            args.push(filePath);
+        }
         args = args.concat(additionalArguments);
         return args;
     }
@@ -288,7 +292,7 @@ export class Sniffer {
                 dockerExecutablePathCS,
                 ...lintArgs,
             ];
-            snifferArgs.command = "docker";
+            snifferArgs.command = resourceConf.containerExec;
             snifferArgs.args = dockerCommand;
         } else {
             snifferArgs.command = resourceConf.executablePathCS;
@@ -313,13 +317,13 @@ export class Sniffer {
 
         const done = new Promise<void>((resolve, reject) => {
             sniffer.on("close", () => {
-                const diagnostics: Diagnostic[] =  [];
+                const diagnostics: Diagnostic[] = [];
                 try {
                     if (
                         isDockerEnabled &&
                         typeof stderr === "string" &&
                         stderr.length > 0 &&
-                        ! stderr.toLowerCase().includes("xdebug")
+                        !stderr.toLowerCase().includes("xdebug")
                     ) {
                         throw new Error(
                             "Docker error: Please check your configuration."

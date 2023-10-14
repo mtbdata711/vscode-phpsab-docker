@@ -44,6 +44,8 @@ export class Configuration {
             const config = workspace.getConfiguration("phpsab.docker", resource);
             const rootPath = this.resolveRootPath(resource);
             let settings: ResourceSettings = {
+                useFilepath: config.get("useFilepath", false),
+                containerExec: config.get("containerExec", "docker"),
                 fixerEnable: config.get("fixerEnable", true),
                 fixerArguments: config.get("fixerArguments", []),
                 workspaceRoot: rootPath,
@@ -152,7 +154,7 @@ export class Configuration {
 
     protected resolveDockerCBFExecutablePath(
         settings: ResourceSettings
-    ): ResourceSettings{
+    ): ResourceSettings {
         const { dockerEnabled, dockerExecutablePathCBF, executablePathCBF } = settings;
 
         if (dockerEnabled && dockerExecutablePathCBF === "") {
@@ -164,7 +166,7 @@ export class Configuration {
 
     protected resolveDockerCSExecutablePath(
         settings: ResourceSettings
-    ): ResourceSettings{
+    ): ResourceSettings {
         const { dockerEnabled, dockerExecutablePathCS, executablePathCS } = settings;
 
         if (dockerEnabled && dockerExecutablePathCS === "") {

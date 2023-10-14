@@ -5,6 +5,8 @@
 "use strict";
 
 export interface ResourceSettings {
+    useFilepath: boolean;
+    containerExec: string;
     workspaceRoot: string;
     fixerEnable: boolean;
     fixerArguments: string[];
