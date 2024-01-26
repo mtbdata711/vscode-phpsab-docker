@@ -188,7 +188,8 @@ export class Sniffer {
         if (isDockerEnabled) {
             filePath = new DockerPathResolver(
                 filePath,
-                resourceConf
+                resourceConf,
+                this.logger
             ).resolveDocker();
         }
 
@@ -340,7 +341,8 @@ export class Sniffer {
                             (carry, [file, messages]) => {
                                 const remappedKey = new DockerPathResolver(
                                     file,
-                                    resourceConf
+                                    resourceConf,
+                                    this.logger
                                 ).resolveLocal();
                                 carry[remappedKey] = messages;
                                 return carry;

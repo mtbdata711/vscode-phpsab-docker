@@ -71,7 +71,7 @@ export class StandardsPathResolver extends PathResolverBase {
             let c = files[i];
             if (fs.existsSync(c)) {
                 resolvedPath = c;
-                return ! dockerEnabled ? resolvedPath : ( new DockerPathResolver(resolvedPath, this.config ) ).resolveDocker();
+                return ! dockerEnabled ? resolvedPath : ( new DockerPathResolver(resolvedPath, this.config, this.logger ) ).resolveDocker();
             }
         }
 

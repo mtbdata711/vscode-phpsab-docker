@@ -4,32 +4,39 @@
  * ------------------------------------------------------------------------------------------ */
 
 import { ResourceSettings } from "../interfaces/resource-settings";
+import { Logger } from "../logger";
 export class DockerPathResolver {
-
     private filePath: string;
     private config: ResourceSettings;
     private pathSeparator: string;
+    private logger: Logger;
 
-    constructor(
-        filePath: string,
-        config: ResourceSettings,
-    ){
+    constructor(filePath: string, config: ResourceSettings, logger: Logger) {
         this.filePath = filePath;
         this.config = config;
         this.pathSeparator = /^win/.test(process.platform) ? "\\" : "/";
+        this.logger = logger;
     }
 
-    public resolveDocker(){
+    public resolveDocker() {
         const { dockerWorkspaceRoot, workspaceRoot } = this.config;
         const { filePath, pathSeparator } = this;
-        const normalisedPath = filePath.split(pathSeparator).join("/");
-        return normalisedPath.replace(workspaceRoot, dockerWorkspaceRoot);
+        const dockerPath = filePath
+            .split(pathSeparator)
+            .join("/")
+            .replace(workspaceRoot, dockerWorkspaceRoot);
+        this.logger.logInfo(`DOCKER: Resolved docker path: ${dockerPath}`);
+        return dockerPath;
     }
 
-    public resolveLocal(){
+    public resolveLocal() {
         const { dockerWorkspaceRoot, workspaceRoot } = this.config;
         const { filePath, pathSeparator } = this;
-        const normalisedPath = filePath.split("/").join(pathSeparator);
-        return normalisedPath.replace(dockerWorkspaceRoot, workspaceRoot);
+        const localPath = filePath
+            .split("/")
+            .join(pathSeparator)
+            .replace(dockerWorkspaceRoot, workspaceRoot);
+        this.logger.logInfo(`DOCKER: Resolved local path: ${localPath}`);
+        return localPath;
     }
 }
