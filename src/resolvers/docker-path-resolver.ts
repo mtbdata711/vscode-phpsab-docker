@@ -4,7 +4,6 @@
  * ------------------------------------------------------------------------------------------ */
 
 import { ResourceSettings } from "../interfaces/resource-settings";
-import * as path from "path";
 export class DockerPathResolver {
 
     private filePath: string;
@@ -22,15 +21,15 @@ export class DockerPathResolver {
 
     public resolveDocker(){
         const { dockerWorkspaceRoot, workspaceRoot } = this.config;
-        let { filePath } = this;
-        const normalisedPath = filePath.split(this.pathSeparator).join("/");
+        const { filePath, pathSeparator } = this;
+        const normalisedPath = filePath.split(pathSeparator).join("/");
         return normalisedPath.replace(workspaceRoot, dockerWorkspaceRoot);
     }
 
     public resolveLocal(){
         const { dockerWorkspaceRoot, workspaceRoot } = this.config;
-        let { filePath } = this;
-        const normalisedPath = filePath.split("/").join(this.pathSeparator);
+        const { filePath, pathSeparator } = this;
+        const normalisedPath = filePath.split("/").join(pathSeparator);
         return normalisedPath.replace(dockerWorkspaceRoot, workspaceRoot);
     }
 }
