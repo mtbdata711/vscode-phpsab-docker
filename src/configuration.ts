@@ -158,7 +158,7 @@ export class Configuration {
         const { dockerEnabled, dockerExecutablePathCBF, executablePathCBF } = settings;
 
         if (dockerEnabled && dockerExecutablePathCBF === "") {
-            settings.dockerExecutablePathCBF = new DockerPathResolver(executablePathCBF, settings, this.logger).resolveDocker();
+            settings.dockerExecutablePathCBF = new DockerPathResolver(executablePathCBF, settings, this.logger).resolveDockerRaw();
         }
 
         return settings;
@@ -170,7 +170,7 @@ export class Configuration {
         const { dockerEnabled, dockerExecutablePathCS, executablePathCS } = settings;
 
         if (dockerEnabled && dockerExecutablePathCS === "") {
-            settings.dockerExecutablePathCS = new DockerPathResolver(executablePathCS, settings, this.logger).resolveDocker();
+            settings.dockerExecutablePathCS = new DockerPathResolver(executablePathCS, settings, this.logger).resolveDockerRaw();
         }
 
         return settings;
