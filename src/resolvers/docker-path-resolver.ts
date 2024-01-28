@@ -40,10 +40,11 @@ export class DockerPathResolver {
     public resolveDockerRaw() {
         const { dockerWorkspaceRoot, workspaceRoot } = this.config;
         const { filePath, pathSeparator } = this;
+        const normalizedWorkspaceRoot = workspaceRoot.split(pathSeparator).join("/");
         const dockerPath = filePath
             .split(pathSeparator)
             .join("/")
-            .replace(workspaceRoot, dockerWorkspaceRoot);
+            .replace(normalizedWorkspaceRoot, dockerWorkspaceRoot);
         this.logger.logInfo(
             `DOCKER: Resolved docker path from raw: ${dockerPath}`
         );
@@ -54,10 +55,11 @@ export class DockerPathResolver {
     public resolveLocalRaw() {
         const { dockerWorkspaceRoot, workspaceRoot } = this.config;
         const { filePath, pathSeparator } = this;
+        const normalizedDockerWorkspaceRoot = dockerWorkspaceRoot.split("/").join(pathSeparator);
         const localPath = filePath
             .split("/")
             .join(pathSeparator)
-            .replace(dockerWorkspaceRoot, workspaceRoot);
+            .replace(normalizedDockerWorkspaceRoot, workspaceRoot);
         this.logger.logInfo(`DOCKER: Resolved local path: ${localPath}`);
         return localPath;
     }
