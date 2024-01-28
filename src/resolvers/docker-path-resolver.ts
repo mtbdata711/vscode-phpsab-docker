@@ -18,18 +18,40 @@ export class DockerPathResolver {
         this.logger = logger;
     }
 
+    // resolve docker path to local path from document.uri.fsPath
     public resolveDocker() {
+        const { dockerWorkspaceRoot, workspaceRoot } = this.config;
+        const { filePath } = this;
+        const dockerPath = filePath.replace(workspaceRoot, dockerWorkspaceRoot);
+        this.logger.logInfo(`DOCKER: Resolved docker path: ${dockerPath}`);
+        return dockerPath;
+    }
+
+    // resolve local path to docker path from document.uri.fsPath
+    public resolveLocal() {
+        const { dockerWorkspaceRoot, workspaceRoot } = this.config;
+        const { filePath } = this;
+        const localPath = filePath.replace(dockerWorkspaceRoot, workspaceRoot);
+        this.logger.logInfo(`DOCKER: Resolved local path: ${localPath}`);
+        return localPath;
+    }
+
+    // resolve local path to docker path from raw path
+    public resolveDockerRaw() {
         const { dockerWorkspaceRoot, workspaceRoot } = this.config;
         const { filePath, pathSeparator } = this;
         const dockerPath = filePath
             .split(pathSeparator)
             .join("/")
             .replace(workspaceRoot, dockerWorkspaceRoot);
-        this.logger.logInfo(`DOCKER: Resolved docker path: ${dockerPath}`);
+        this.logger.logInfo(
+            `DOCKER: Resolved docker path from raw: ${dockerPath}`
+        );
         return dockerPath;
     }
 
-    public resolveLocal() {
+    // resolve docker path to local path from raw path
+    public resolveLocalRaw() {
         const { dockerWorkspaceRoot, workspaceRoot } = this.config;
         const { filePath, pathSeparator } = this;
         const localPath = filePath
