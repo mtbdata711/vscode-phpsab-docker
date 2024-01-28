@@ -8,49 +8,35 @@ import { Logger } from "../logger";
 export class DockerPathResolver {
     private filePath: string;
     private config: ResourceSettings;
-    private pathSeparator: string;
     private logger: Logger;
+    private isWindows: boolean;
 
     constructor(filePath: string, config: ResourceSettings, logger: Logger) {
         this.filePath = filePath;
         this.config = config;
-        this.pathSeparator = /^win/.test(process.platform) ? "\\" : "/";
         this.logger = logger;
+        this.isWindows = /^win/.test(process.platform);
     }
 
+    // resolve docker path to local path from document.uri.fsPath
     public resolveDocker() {
         const { dockerWorkspaceRoot, workspaceRoot } = this.config;
-        const { filePath, pathSeparator } = this;
-        let dockerPath;
-        if (filePath.includes(workspaceRoot)) {
-            dockerPath = filePath.replace(workspaceRoot, dockerWorkspaceRoot);
-        } else {
-            const normalizedWorkspaceRoot = workspaceRoot.split(pathSeparator).join("/");
-            dockerPath = filePath
-                .split(pathSeparator)
-                .join("/")
-                .replace(normalizedWorkspaceRoot, dockerWorkspaceRoot);
+        const { filePath } = this;
+        let normalisedWorkspaceRoot = workspaceRoot;
+        if(this.isWindows) {
+            normalisedWorkspaceRoot = workspaceRoot.replace(/\\/g, "/").toLowerCase();
         }
+        const dockerPath = filePath.replace(normalisedWorkspaceRoot, dockerWorkspaceRoot);
         this.logger.logInfo(`DOCKER: Resolved docker path: ${dockerPath}`);
         return dockerPath;
     }
-    
+
+    // resolve local path to docker path from document.uri.fsPath
     public resolveLocal() {
         const { dockerWorkspaceRoot, workspaceRoot } = this.config;
-        const { filePath, pathSeparator } = this;
-        let localPath;
-        if (filePath.includes(dockerWorkspaceRoot)) {
-            localPath = filePath.replace(dockerWorkspaceRoot, workspaceRoot);
-        } else {
-            const normalizedDockerWorkspaceRoot = dockerWorkspaceRoot.split("/").join(pathSeparator);
-            localPath = filePath
-                .split("/")
-                .join(pathSeparator)
-                .replace(normalizedDockerWorkspaceRoot, workspaceRoot);
-        }
+        const { filePath } = this;
+        const localPath = filePath.replace(dockerWorkspaceRoot, workspaceRoot);
         this.logger.logInfo(`DOCKER: Resolved local path: ${localPath}`);
         return localPath;
     }
-
-    
 }
