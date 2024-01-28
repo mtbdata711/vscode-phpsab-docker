@@ -73,7 +73,7 @@ export class StandardsPathResolver extends PathResolverBase {
             if (fs.existsSync(c)) {
                 this.logger.logInfo('Standards Search found: ', c);
                 resolvedPath = c;
-                return ! dockerEnabled ? resolvedPath : ( new DockerPathResolver(resolvedPath, this.config, this.logger ) ).resolveDockerRaw();
+                return ! dockerEnabled ? resolvedPath : ( new DockerPathResolver(resolvedPath, this.config, this.logger ) ).resolveDocker();
             }
         }
         this.logger.logInfo('Standards Search not found: ', files);

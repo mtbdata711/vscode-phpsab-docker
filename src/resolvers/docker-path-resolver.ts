@@ -18,49 +18,39 @@ export class DockerPathResolver {
         this.logger = logger;
     }
 
-    // resolve docker path to local path from document.uri.fsPath
     public resolveDocker() {
         const { dockerWorkspaceRoot, workspaceRoot } = this.config;
-        const { filePath } = this;
-        const dockerPath = filePath.replace(workspaceRoot, dockerWorkspaceRoot);
+        const { filePath, pathSeparator } = this;
+        let dockerPath;
+        if (filePath.includes(workspaceRoot)) {
+            dockerPath = filePath.replace(workspaceRoot, dockerWorkspaceRoot);
+        } else {
+            const normalizedWorkspaceRoot = workspaceRoot.split(pathSeparator).join("/");
+            dockerPath = filePath
+                .split(pathSeparator)
+                .join("/")
+                .replace(normalizedWorkspaceRoot, dockerWorkspaceRoot);
+        }
         this.logger.logInfo(`DOCKER: Resolved docker path: ${dockerPath}`);
         return dockerPath;
     }
-
-    // resolve local path to docker path from document.uri.fsPath
+    
     public resolveLocal() {
         const { dockerWorkspaceRoot, workspaceRoot } = this.config;
-        const { filePath } = this;
-        const localPath = filePath.replace(dockerWorkspaceRoot, workspaceRoot);
+        const { filePath, pathSeparator } = this;
+        let localPath;
+        if (filePath.includes(dockerWorkspaceRoot)) {
+            localPath = filePath.replace(dockerWorkspaceRoot, workspaceRoot);
+        } else {
+            const normalizedDockerWorkspaceRoot = dockerWorkspaceRoot.split("/").join(pathSeparator);
+            localPath = filePath
+                .split("/")
+                .join(pathSeparator)
+                .replace(normalizedDockerWorkspaceRoot, workspaceRoot);
+        }
         this.logger.logInfo(`DOCKER: Resolved local path: ${localPath}`);
         return localPath;
     }
 
-    // resolve local path to docker path from raw path
-    public resolveDockerRaw() {
-        const { dockerWorkspaceRoot, workspaceRoot } = this.config;
-        const { filePath, pathSeparator } = this;
-        const normalizedWorkspaceRoot = workspaceRoot.split(pathSeparator).join("/");
-        const dockerPath = filePath
-            .split(pathSeparator)
-            .join("/")
-            .replace(normalizedWorkspaceRoot, dockerWorkspaceRoot);
-        this.logger.logInfo(
-            `DOCKER: Resolved docker path from raw: ${dockerPath}`
-        );
-        return dockerPath;
-    }
-
-    // resolve docker path to local path from raw path
-    public resolveLocalRaw() {
-        const { dockerWorkspaceRoot, workspaceRoot } = this.config;
-        const { filePath, pathSeparator } = this;
-        const normalizedDockerWorkspaceRoot = dockerWorkspaceRoot.split("/").join(pathSeparator);
-        const localPath = filePath
-            .split("/")
-            .join(pathSeparator)
-            .replace(normalizedDockerWorkspaceRoot, workspaceRoot);
-        this.logger.logInfo(`DOCKER: Resolved local path: ${localPath}`);
-        return localPath;
-    }
+    
 }
