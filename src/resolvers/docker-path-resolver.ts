@@ -21,10 +21,11 @@ export class DockerPathResolver {
     // resolve docker path to local path from document.uri.fsPath
     public resolveDocker() {
         const { dockerWorkspaceRoot, workspaceRoot } = this.config;
-        const { filePath } = this;
+        let { filePath } = this;
         let normalisedWorkspaceRoot = workspaceRoot;
         if(this.isWindows) {
             normalisedWorkspaceRoot = workspaceRoot.replace(/\\/g, "/").toLowerCase();
+            filePath = filePath.replace(/\\/g, "/").toLowerCase();
         }
         const dockerPath = filePath.replace(normalisedWorkspaceRoot, dockerWorkspaceRoot);
         this.logger.logInfo(`DOCKER: Resolved docker path: ${dockerPath}`);
