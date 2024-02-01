@@ -80,7 +80,7 @@ export class Fixer {
         let filePath = document.fileName;
 
         if (isDockerEnabled) {
-            filePath = new DockerPathResolver(filePath, resourceConf).resolveDocker();
+            filePath = new DockerPathResolver(filePath, resourceConf, this.logger).resolveDocker();
         }
         let args = [];
         args.push("-q");

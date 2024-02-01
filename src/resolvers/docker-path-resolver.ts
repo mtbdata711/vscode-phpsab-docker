@@ -4,30 +4,37 @@
  * ------------------------------------------------------------------------------------------ */
 
 import { ResourceSettings } from "../interfaces/resource-settings";
-
+import { Logger } from "../logger";
 export class DockerPathResolver {
-
     private filePath: string;
     private config: ResourceSettings;
+    private logger: Logger;
 
-    constructor(
-        filePath: string,
-        config: ResourceSettings,
-    ){
+    constructor(filePath: string, config: ResourceSettings, logger: Logger) {
         this.filePath = filePath;
         this.config = config;
+        this.logger = logger;
     }
 
-    public resolveDocker(){
+    public resolveDocker() {
+        const { dockerWorkspaceRoot, workspaceRoot } = this.config;
+        let { filePath } = this;
+        const normalisedWorkspaceRoot = DockerPathResolver.toPosixPath(workspaceRoot);
+        const normalisedFilePath = DockerPathResolver.toPosixPath(filePath);
+        const dockerPath = normalisedFilePath.replace(normalisedWorkspaceRoot, dockerWorkspaceRoot);
+        this.logger.logInfo(`DOCKER: Resolved docker path: ${dockerPath}`);
+        return dockerPath;
+    }
+
+    public resolveLocal() {
         const { dockerWorkspaceRoot, workspaceRoot } = this.config;
         const { filePath } = this;
-        return filePath.replace(workspaceRoot, dockerWorkspaceRoot);
+        const localPath = filePath.replace(dockerWorkspaceRoot, workspaceRoot);
+        this.logger.logInfo(`DOCKER: Resolved local path: ${localPath}`);
+        return localPath;
     }
 
-    public resolveLocal(){
-        const { dockerWorkspaceRoot, workspaceRoot } = this.config;
-        const { filePath } = this;
-        return filePath.replace(dockerWorkspaceRoot, workspaceRoot);
+    static toPosixPath(path: string) {
+        return path.replace(/\\/g, "/");
     }
-
 }

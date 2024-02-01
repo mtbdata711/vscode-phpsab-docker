@@ -66,15 +66,17 @@ export class StandardsPathResolver extends PathResolverBase {
             });
         });
         this.logger.logInfo('Standards Search paths: ', searchPaths);
+        this.logger.logInfo('Standards Search files: ', files);
 
         for (let i = 0, len = files.length; i < len; i++) {
             let c = files[i];
             if (fs.existsSync(c)) {
+                this.logger.logInfo('Standards Search found: ', c);
                 resolvedPath = c;
-                return ! dockerEnabled ? resolvedPath : ( new DockerPathResolver(resolvedPath, this.config ) ).resolveDocker();
+                return ! dockerEnabled ? resolvedPath : ( new DockerPathResolver(resolvedPath, this.config, this.logger ) ).resolveDocker();
             }
         }
-
+        this.logger.logInfo('Standards Search not found: ', files);
         return resolvedPath === null ? configured : resolvedPath;
     }
 }
