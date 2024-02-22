@@ -4,14 +4,16 @@
  * ------------------------------------------------------------------------------------------ */
 "use strict";
 
-import * as path from "path";
+import { SpawnSyncOptions } from "child_process";
+import * as spawn from "cross-spawn";
 import * as fs from "fs";
+import * as path from "path";
+import { Uri, workspace, WorkspaceConfiguration } from "vscode";
+import { ResourceSettings } from "./interfaces/resource-settings";
 import { Settings } from "./interfaces/settings";
 import { Logger, LogLevel } from "./logger";
-import { ResourceSettings } from "./interfaces/resource-settings";
-import { PathResolver } from "./resolvers/path-resolver";
-import { workspace, WorkspaceConfiguration, Uri } from "vscode";
 import { DockerPathResolver } from "./resolvers/docker-path-resolver";
+import { PathResolver } from "./resolvers/path-resolver";
 
 export class Configuration {
     debug: boolean;
@@ -21,7 +23,7 @@ export class Configuration {
         this.config = workspace.getConfiguration("phpsab.docker");
         this.debug = this.config.get("debug", false);
 
-        let logLevel: LogLevel = this.debug ? 'INFO' : 'ERROR';
+        let logLevel: LogLevel = this.debug ? "INFO" : "ERROR";
         this.logger.setOutputLevel(logLevel);
     }
 
@@ -41,7 +43,10 @@ export class Configuration {
             index++
         ) {
             const resource = workspace.workspaceFolders[index].uri;
-            const config = workspace.getConfiguration("phpsab.docker", resource);
+            const config = workspace.getConfiguration(
+                "phpsab.docker",
+                resource
+            );
             const rootPath = this.resolveRootPath(resource);
             let settings: ResourceSettings = {
                 useFilepath: config.get("useFilepath", false),
@@ -68,8 +73,14 @@ export class Configuration {
                 dockerEnabled: config.get("dockerEnabled", false),
                 dockerContainer: config.get("dockerContainer", ""),
                 dockerWorkspaceRoot: config.get("dockerWorkspaceRoot", ""),
-                dockerExecutablePathCBF: config.get("dockerExecutablePathCBF", ""),
-                dockerExecutablePathCS: config.get("dockerExecutablePathCS", ""),
+                dockerExecutablePathCBF: config.get(
+                    "dockerExecutablePathCBF",
+                    ""
+                ),
+                dockerExecutablePathCS: config.get(
+                    "dockerExecutablePathCS",
+                    ""
+                ),
             };
             settings = await this.resolveCBFExecutablePath(settings);
             settings = await this.resolveCSExecutablePath(settings);
@@ -92,7 +103,7 @@ export class Configuration {
             snifferTypeDelay: this.config.get("snifferTypeDelay", 250),
             debug: this.debug,
         };
-        this.logger.logInfo('CONFIGURATION', settings);
+        this.logger.logInfo("CONFIGURATION", settings);
         return settings;
     }
 
@@ -155,10 +166,15 @@ export class Configuration {
     protected resolveDockerCBFExecutablePath(
         settings: ResourceSettings
     ): ResourceSettings {
-        const { dockerEnabled, dockerExecutablePathCBF, executablePathCBF } = settings;
+        const { dockerEnabled, dockerExecutablePathCBF, executablePathCBF } =
+            settings;
 
         if (dockerEnabled && dockerExecutablePathCBF === "") {
-            settings.dockerExecutablePathCBF = new DockerPathResolver(executablePathCBF, settings, this.logger).resolveDocker();
+            settings.dockerExecutablePathCBF = new DockerPathResolver(
+                executablePathCBF,
+                settings,
+                this.logger
+            ).resolveDocker();
         }
 
         return settings;
@@ -167,10 +183,15 @@ export class Configuration {
     protected resolveDockerCSExecutablePath(
         settings: ResourceSettings
     ): ResourceSettings {
-        const { dockerEnabled, dockerExecutablePathCS, executablePathCS } = settings;
+        const { dockerEnabled, dockerExecutablePathCS, executablePathCS } =
+            settings;
 
         if (dockerEnabled && dockerExecutablePathCS === "") {
-            settings.dockerExecutablePathCS = new DockerPathResolver(executablePathCS, settings, this.logger).resolveDocker();
+            settings.dockerExecutablePathCS = new DockerPathResolver(
+                executablePathCS,
+                settings,
+                this.logger
+            ).resolveDocker();
         }
 
         return settings;
@@ -180,20 +201,50 @@ export class Configuration {
         settings: ResourceSettings,
         resource: string
     ): Promise<ResourceSettings> {
+        const {
+            dockerEnabled,
+            dockerExecutablePathCS,
+            dockerExecutablePathCBF,
+        } = settings;
         if (
             settings.snifferEnable &&
             !(await this.executableExist(settings.executablePathCS))
         ) {
-            this.logger.logInfo("The phpcs executable was not found for " + resource);
+            this.logger.logInfo(
+                "The phpcs executable was not found for " + resource
+            );
             settings.snifferEnable = false;
+        } else if (
+            dockerEnabled === true &&
+            typeof dockerExecutablePathCS === "string" &&
+            dockerExecutablePathCS.length > 0
+        ) {
+            settings.snifferEnable = await this.dockerExecutableExist(
+                dockerExecutablePathCS,
+                settings
+            );
         }
         if (
             settings.fixerEnable &&
             !(await this.executableExist(settings.executablePathCBF))
         ) {
-            this.logger.logInfo("The phpcbf executable was not found for " + resource);
+            this.logger.logInfo(
+                "The phpcbf executable was not found for " + resource
+            );
             settings.fixerEnable = false;
+        } else if (
+            dockerEnabled === true &&
+            typeof dockerExecutablePathCBF === "string" &&
+            dockerExecutablePathCBF.length > 0
+        ) {
+            settings.fixerEnable = await this.dockerExecutableExist(
+                dockerExecutablePathCBF,
+                settings
+            );
         }
+
+        this.logger.logInfo("VALIDATED", settings);
+
         return settings;
     }
 
@@ -205,5 +256,42 @@ export class Configuration {
             return true;
         }
         return false;
+    }
+
+    private async dockerExecutableExist(
+        path: string,
+        settings: ResourceSettings
+    ) {
+        if (!path) {
+            return false;
+        }
+
+        const { workspaceRoot, dockerContainer, containerExec } = settings;
+
+        const options: SpawnSyncOptions = {
+            cwd: workspaceRoot !== null ? workspaceRoot : undefined,
+            env: process.env,
+            encoding: "utf8",
+            input: undefined,
+            shell: true,
+        };
+
+        const dockerCommand = [
+            "exec",
+            "-i",
+            dockerContainer,
+            "test",
+            "-f",
+            path,
+            "&&",
+            "echo",
+            "1",
+            "||",
+            "echo",
+            "0",
+        ];
+
+        const result = spawn.sync(containerExec, dockerCommand, options);
+        return result.stdout.toString().trim() === "1";
     }
 }
