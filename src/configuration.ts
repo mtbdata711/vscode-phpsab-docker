@@ -206,41 +206,46 @@ export class Configuration {
             dockerExecutablePathCS,
             dockerExecutablePathCBF,
         } = settings;
-        if (
-            settings.snifferEnable &&
-            !(await this.executableExist(settings.executablePathCS))
-        ) {
-            this.logger.logInfo(
-                "The phpcs executable was not found for " + resource
-            );
-            settings.snifferEnable = false;
-        } else if (
-            dockerEnabled === true &&
-            typeof dockerExecutablePathCS === "string" &&
-            dockerExecutablePathCS.length > 0
-        ) {
-            settings.snifferEnable = await this.dockerExecutableExist(
-                dockerExecutablePathCS,
-                settings
-            );
-        }
-        if (
-            settings.fixerEnable &&
-            !(await this.executableExist(settings.executablePathCBF))
-        ) {
-            this.logger.logInfo(
-                "The phpcbf executable was not found for " + resource
-            );
-            settings.fixerEnable = false;
-        } else if (
-            dockerEnabled === true &&
-            typeof dockerExecutablePathCBF === "string" &&
-            dockerExecutablePathCBF.length > 0
-        ) {
-            settings.fixerEnable = await this.dockerExecutableExist(
-                dockerExecutablePathCBF,
-                settings
-            );
+
+        if (dockerEnabled === true) {
+            if (
+                typeof dockerExecutablePathCS === "string" &&
+                dockerExecutablePathCS.length > 0
+            ) {
+                settings.snifferEnable = await this.dockerExecutableExist(
+                    dockerExecutablePathCS,
+                    settings
+                );
+            }
+
+            if (
+                typeof dockerExecutablePathCBF === "string" &&
+                dockerExecutablePathCBF.length > 0
+            ) {
+                settings.fixerEnable = await this.dockerExecutableExist(
+                    dockerExecutablePathCBF,
+                    settings
+                );
+            }
+        } else {
+            if (
+                settings.snifferEnable &&
+                !(await this.executableExist(settings.executablePathCS))
+            ) {
+                this.logger.logInfo(
+                    "The phpcs executable was not found for " + resource
+                );
+                settings.snifferEnable = false;
+            }
+            if (
+                settings.fixerEnable &&
+                !(await this.executableExist(settings.executablePathCBF))
+            ) {
+                this.logger.logInfo(
+                    "The phpcbf executable was not found for " + resource
+                );
+                settings.fixerEnable = false;
+            }
         }
 
         this.logger.logInfo("VALIDATED", settings);
