@@ -87,6 +87,8 @@ export class Configuration {
             settings = this.resolveDockerCBFExecutablePath(settings);
             settings = this.resolveDockerCSExecutablePath(settings);
 
+            console.log({ settings });
+
             settings = await this.validate(
                 settings,
                 workspace.workspaceFolders[index].name
@@ -126,6 +128,13 @@ export class Configuration {
     protected async resolveCBFExecutablePath(
         settings: ResourceSettings
     ): Promise<ResourceSettings> {
+        
+        const { dockerEnabled, dockerExecutablePathCBF } = settings;
+
+        if (dockerEnabled && typeof dockerExecutablePathCBF === "string" && dockerExecutablePathCBF.length > 0) {
+            return settings;
+        }
+
         if (settings.executablePathCBF === null) {
             let executablePathResolver = new PathResolver(settings, "phpcbf");
             settings.executablePathCBF = await executablePathResolver.resolve();
@@ -148,6 +157,13 @@ export class Configuration {
     protected async resolveCSExecutablePath(
         settings: ResourceSettings
     ): Promise<ResourceSettings> {
+
+        const { dockerEnabled, dockerExecutablePathCS } = settings;
+
+        if (dockerEnabled && typeof dockerExecutablePathCS === "string" && dockerExecutablePathCS.length > 0) {
+            return settings;
+        }
+
         if (settings.executablePathCS === null) {
             let executablePathResolver = new PathResolver(settings, "phpcs");
             settings.executablePathCS = await executablePathResolver.resolve();
@@ -169,7 +185,11 @@ export class Configuration {
         const { dockerEnabled, dockerExecutablePathCBF, executablePathCBF } =
             settings;
 
-        if (dockerEnabled && dockerExecutablePathCBF === "") {
+        if(!dockerEnabled) {
+            return settings;
+        }
+
+        if (dockerExecutablePathCBF === "") {
             settings.dockerExecutablePathCBF = new DockerPathResolver(
                 executablePathCBF,
                 settings,
@@ -186,7 +206,11 @@ export class Configuration {
         const { dockerEnabled, dockerExecutablePathCS, executablePathCS } =
             settings;
 
-        if (dockerEnabled && dockerExecutablePathCS === "") {
+        if(!dockerEnabled) {
+            return settings;
+        }
+
+        if (dockerExecutablePathCS === "") {
             settings.dockerExecutablePathCS = new DockerPathResolver(
                 executablePathCS,
                 settings,
@@ -206,40 +230,50 @@ export class Configuration {
             dockerExecutablePathCS,
             dockerExecutablePathCBF,
         } = settings;
-        if (
-            settings.snifferEnable &&
-            !(await this.executableExist(settings.executablePathCS))
-        ) {
+
+        if (settings.snifferEnable) {
+            if (
+                dockerEnabled &&
+                typeof dockerExecutablePathCS === "string" &&
+                dockerExecutablePathCS.length > 0
+            ) {
+                settings.snifferEnable = await this.dockerExecutableExist(
+                    dockerExecutablePathCS,
+                    settings
+                );
+            } else {
+                settings.snifferEnable = await this.executableExist(
+                    settings.executablePathCS
+                );
+            }
+        }
+
+        if (settings.fixerEnable) {
+            if (
+                dockerEnabled &&
+                typeof dockerExecutablePathCBF === "string" &&
+                dockerExecutablePathCBF.length > 0
+            ) {
+                settings.fixerEnable = await this.dockerExecutableExist(
+                    dockerExecutablePathCBF,
+                    settings
+                );
+            } else {
+                settings.fixerEnable = await this.executableExist(
+                    settings.executablePathCBF
+                );
+            }
+        }
+
+        if (!settings.snifferEnable) {
             this.logger.logInfo(
                 "The phpcs executable was not found for " + resource
             );
-            settings.snifferEnable = false;
-        } else if (
-            dockerEnabled === true &&
-            typeof dockerExecutablePathCS === "string" &&
-            dockerExecutablePathCS.length > 0
-        ) {
-            settings.snifferEnable = await this.dockerExecutableExist(
-                dockerExecutablePathCS,
-                settings
-            );
         }
-        if (
-            settings.fixerEnable &&
-            !(await this.executableExist(settings.executablePathCBF))
-        ) {
+
+        if (!settings.fixerEnable) {
             this.logger.logInfo(
                 "The phpcbf executable was not found for " + resource
-            );
-            settings.fixerEnable = false;
-        } else if (
-            dockerEnabled === true &&
-            typeof dockerExecutablePathCBF === "string" &&
-            dockerExecutablePathCBF.length > 0
-        ) {
-            settings.fixerEnable = await this.dockerExecutableExist(
-                dockerExecutablePathCBF,
-                settings
             );
         }
 
